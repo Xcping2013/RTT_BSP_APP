@@ -42,6 +42,7 @@ static void serial_thread_entry(void *parameter)
 						motorSpeedCnt=0;
 						rt_device_close(serial);
 						if(autoPULLdata==TRUE)	autoPULLdata=FALSE;
+						rt_kprintf("motor[1] is stop and stop printing data\n>>");
 					}
 				}				
 				if(uart3_rx_len_index < uart3_rx_len_max)

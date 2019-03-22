@@ -96,6 +96,8 @@ void Error_Handler(void);
 #define OUT8_GPIO_Port GPIOD
 #define RGB_B_Pin GPIO_PIN_4
 #define RGB_B_GPIO_Port GPIOD
+#define BEEP_Pin GPIO_PIN_5
+#define BEEP_GPIO_Port GPIOD
 #define LED_SYS_Pin GPIO_PIN_7
 #define LED_SYS_GPIO_Port GPIOD
 #define IIC_SDA_Pin GPIO_PIN_3
@@ -118,6 +120,10 @@ void Error_Handler(void);
 #define IN7_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
 
+extern uint8_t buttonSTARTpressed;
+extern uint8_t buttonRESETpressed;
+extern uint8_t beep_flash_on;
+void FlexButtonTest_APP(void);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

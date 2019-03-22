@@ -37,19 +37,19 @@
 //	{PB_4,PB_3},	//SDA SCL
 //	0xA0,
 //};
+//#define LED_PIN								 PD_7
 
-#define LED_PIN								 PD_7
-#define CS_PIN_TMC429 		 		 PC_4
-#define SELECT_TMC429()        GPIOC->BRR=BIT4
-#define DESELECT_TMC429()      GPIOC->BSRR=BIT4
+//#define CS_PIN_TMC429 		 		 PC_4
+//#define SELECT_TMC429()        GPIOC->BRR=BIT4
+//#define DESELECT_TMC429()      GPIOC->BSRR=BIT4
 											
-#define POSCMP1_PIN		91
-#define	INTOUT1_PIN		92	
+//#define POSCMP1_PIN		91
+//#define	INTOUT1_PIN		92	
 
-#define	MX_SPI_Init			  MX_SPI1_Init					
-#define	ReadWriteSPI			ReadWriteSPI1	
+//#define	MX_SPI_Init			  MX_SPI1_Init					
+//#define	ReadWriteSPI			ReadWriteSPI1	
 
-extern uint8_t homeSensorPin[3];
+//extern uint8_t homeSensorPin[3];
 extern uint8_t inputs_pin_num[12];
 extern uint8_t outputs_pin_num[8];
 extern uint8_t rgb_pin_num[3];

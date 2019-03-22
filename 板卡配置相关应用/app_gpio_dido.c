@@ -17,7 +17,7 @@ static rt_uint16_t out_flash_cnt[9]={0};
 static int timer_10ms_init(void);
 static void timeout1(void *parameter);
 
-__weak void dido_gpio_init(void)
+void dido_gpio_init(void)
 {    
 	uint8_t i;
 	for(i=0;i<12;i++)
@@ -37,7 +37,7 @@ __weak void dido_gpio_init(void)
 	timer_10ms_init();
 }
 //
-__weak int readinput(int argc, char **argv)
+int readinput(int argc, char **argv)
 {
     if (argc == 1)
     {
@@ -65,7 +65,7 @@ __weak int readinput(int argc, char **argv)
     }
     return 0;
 }
-__weak int output(int argc, char **argv)
+int output(int argc, char **argv)
 {
 	if (argc > 2)
 	{

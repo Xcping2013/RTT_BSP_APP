@@ -1,20 +1,26 @@
 /*******************************************************************************
-  Project: stepRocker Mini-TMCL
+Module:  TMC429.c
 
-  Module:  TMC429.c
-           TMC429 library
+FEATURES AND BENEFITS
 
-   Copyright (C) 2011 TRINAMIC Motion Control GmbH & Co KG
-                      Waterloohain 5
-                      D - 22769 Hamburg, Germany
-                      http://www.trinamic.com/
-
-   This program is free software; you can redistribute it and/or modify it
-   freely.
-
-   This program is distributed "as is" in the hope that it will be useful, but
-   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-   or FITNESS FOR A PARTICULAR PURPOSE.
+	Full Compatible Successor of the TMC428
+	Controls up to three stepper motors
+	3.3 V or 5 V operation with CMOS / TTL compatible IOs
+	Interface for SPI motor drivers with data rates up to 1 Mbit/s
+	Step/Direction interface
+	Clock frequency: up to 32 MHz (can use CPU clock)
+	Internal position counters 24 bit wide
+	Microstep frequency up to 1 MHz
+	Read-out option for all motion parameters
+	Programmable 6 bit microstep table, up to 64 entries for a quarter sine wave period
+	Ramp generators for autonomous positioning / speed control
+	On-the-fly change of target motion parameters
+	Power boost automatic acceleration dependent current control
+	Low power operation: 1.25 mA at 4 MHz (typ.)
+	Compact Size: ultra small 16 pin SSOP package, small 24 pin SOP package, and 32 pin QFN 5x5 mm package
+	Directly controls TMC23x, TMC24x, TMC26x, and TMC389
+	
+	
 *******************************************************************************/
 
 /**

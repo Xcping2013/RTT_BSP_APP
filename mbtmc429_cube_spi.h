@@ -26,6 +26,7 @@
 /* Includes ------------------------------------------------------------------*/
 //#include "stm32f1xx_hal_spi.h"
 #include "mbtmc429_cube_main.h"
+	 
 /* USER CODE BEGIN Includes */
 #include "bsp_defines.h"
 /* USER CODE END Includes */

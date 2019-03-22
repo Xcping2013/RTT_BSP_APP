@@ -27,7 +27,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdlib.h>		//abs strtol
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +69,8 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	uint32_t tickLedstart;
+	uint32_t tickBeepstart;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -90,15 +91,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART3_UART_Init();
+//  MX_USART3_UART_Init();
   MX_USART1_UART_Init();
-  MX_SPI1_Init();
-  MX_TIM3_Init();
-  MX_TIM1_Init();
-  MX_SPI2_Init();
-  MX_USART2_UART_Init();
+//  MX_SPI1_Init();
+//  MX_TIM3_Init();
+//  MX_TIM1_Init();
+//  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+	tickLedstart=HAL_GetTick();
+	tickBeepstart=HAL_GetTick();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -106,9 +107,27 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
+		{
+			HAL_GPIO_TogglePin(LED_SYS_GPIO_Port,LED_SYS_Pin);
+			tickLedstart=HAL_GetTick();
+		}
+		if(abs((int)(HAL_GetTick()-tickBeepstart))>350)
+		{
+			if(beep_flash_on) 
+			{
+				HAL_GPIO_TogglePin(BEEP_GPIO_Port,BEEP_Pin);
+				tickBeepstart=HAL_GetTick();
+			}
+			else 
+			{
+				HAL_GPIO_WritePin(BEEP_GPIO_Port,BEEP_Pin, GPIO_PIN_RESET);
+			}
+		}
+		FlexButtonTest_APP();
     /* USER CODE BEGIN 3 */
   }
+	
   /* USER CODE END 3 */
 }
 

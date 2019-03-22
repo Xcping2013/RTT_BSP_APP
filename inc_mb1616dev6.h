@@ -3,7 +3,7 @@
 
 #include "bsp_defines.h"
 
-#define LED_PIN	PB_2			
+			
 
 //at24cxx_t at24c256=
 //{

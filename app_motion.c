@@ -311,7 +311,7 @@ static void TMCL_GetAxisParameter(void)
 
       case leftLimit_SwS:
         ActualReply.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x02<<ActualCommand.Motor*2)) ? 1:0;
-			  CMD_TRACE("motor[%d] left switch status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+			  CMD_TRACE("motor[%d] left limit switch status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
         break;
 
       case rightLimit_SwS:
@@ -603,7 +603,7 @@ int motor(int argc, char **argv)
 				
 					ActualCommand.Motor=atoi(argv[2]);
 					homeInfo.GoHome[ActualCommand.Motor]=TRUE;
-				 homeInfo.GoLimit[ActualCommand.Motor]=FALSE;
+				  homeInfo.GoLimit[ActualCommand.Motor]=FALSE;
 					homeInfo.Homed[ActualCommand.Motor]=FALSE;
 					ActualCommand.Value.Int32=atoi(argv[3]);
 					homeInfo.HomeSpeed[ActualCommand.Motor]=ActualCommand.Value.Int32;	

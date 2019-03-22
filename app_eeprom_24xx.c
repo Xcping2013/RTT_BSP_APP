@@ -4,14 +4,6 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 
-//MB1616DEV6
-at24cxx_t at24c256=
-{
-	{0},
-	{PC_14,PC_15},
-	0xA2,	//1 0 1 0 0 0 1 0
-};
-
 void at24cxx_hw_init(void)
 {
 	at24c256.eeprom=C24LC256;//C24LC256;

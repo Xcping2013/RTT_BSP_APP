@@ -3,6 +3,8 @@
 
 #include "bsp_defines.h"
 
+extern uint8_t LED_PIN;
+	
 int led_thread_init(void);
 
 #endif
