@@ -2,6 +2,10 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 
+//#define RT_USING_UART2
+
+#if defined(USING_INC_MB1616DEV6) 
+
 uint8_t LED_PIN=PB_2;
 //MB1616DEV6
 at24cxx_t at24c256=
@@ -44,5 +48,19 @@ MSH_CMD_EXPORT(motor, control motor motion by commands);
 MSH_CMD_EXPORT(printdata, auto print position and press);
 MSH_CMD_EXPORT(ParamSave, save parameter as set and load it after board restart);
 
+#endif
 
 
+//MSH_CMD_EXPORT(memcheck, check memory data);
+//MSH_CMD_EXPORT(memtrace, dump memory trace information);
+//MSH_CMD_EXPORT(version, show RT-Thread version information);
+//MSH_CMD_EXPORT(list_thread, list thread);
+//MSH_CMD_EXPORT(list_sem, list semaphore in system);
+//MSH_CMD_EXPORT(list_event, list event in system);
+//MSH_CMD_EXPORT(list_mutex, list mutex in system);
+//MSH_CMD_EXPORT(list_mailbox, list mail box in system);
+//MSH_CMD_EXPORT(list_msgqueue, list message queue in system);
+//MSH_CMD_EXPORT(list_memheap, list memory heap in system);
+//MSH_CMD_EXPORT(list_mempool, list memory pool in system);
+//MSH_CMD_EXPORT(list_timer, list timer in system);
+//MSH_CMD_EXPORT(list_device, list device in system);

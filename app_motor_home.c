@@ -5,8 +5,6 @@
 #include "app_include.h"
 
 homeInfo_t homeInfo;
-//uint8_t homeSensorPin[3]={96,97,98};
-uint8_t homeSensorPin[3]={PD_12,PD_10,PD_11};
 //////////////////////////////////////////////////////////
 void setPositionAsOrigin(u8 axisNum) 
 {
@@ -37,7 +35,7 @@ void setPositionAsOrigin(u8 axisNum)
 			case BUTTON_OFFLINE:
 					if(axisNum==AXIS_X) //Y轴先里后出复位OK
 					{
-						HAL_TIM_Base_Stop_IT(&htim1);
+						timer_stop();
 						autoRESETmotor=OK_2;
 						buttonRESETpressed=FALSE;
 						CMD_TRACE("motor auto reset ok\n");
@@ -56,9 +54,10 @@ void setPositionAsOrigin(u8 axisNum)
 			case BUTTON_ROAD:
 					if(axisNum==AXIS_Z) //Z轴先上后下复位OK
 					{
-						HAL_TIM_Base_Stop_IT(&htim1);
+						timer_stop();
 						autoRESETmotor=OK_2;
 						buttonRESETpressed=FALSE;
+						setChOutput(2,0);	
 						CMD_TRACE("motor auto reset ok\n");
 					}			 
 				break;
@@ -66,7 +65,7 @@ void setPositionAsOrigin(u8 axisNum)
 		}
 	}
 	else if(homeInfo.Homed[axisNum]==TRUE )
-		HAL_TIM_Base_Stop_IT(&htim1);
+		timer_stop();
 	
 }
 //

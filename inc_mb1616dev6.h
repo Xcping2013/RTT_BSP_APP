@@ -1,10 +1,11 @@
 #ifndef __INC_MB1616DEV6_H
 #define __INC_MB1616DEV6_H
 
-#include "bsp_defines.h"
+#include "bsp_include.h"
 
+//OSE 12MHZ  USE UART3   SPI2
 			
-
+#if defined(USING_INC_MB1616DEV6) 
 //at24cxx_t at24c256=
 //{
 //	{0},
@@ -23,5 +24,7 @@
 #define	ReadWriteSPI			ReadWriteSPI2		
 
 extern uint8_t homeSensorPin[3];
+
+#endif
 
 #endif

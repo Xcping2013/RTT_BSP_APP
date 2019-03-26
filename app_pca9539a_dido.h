@@ -45,23 +45,18 @@ four register pairs
 
 #include "bsp_mcu_softi2c.h"
 
-typedef struct 
-{
-	IIC_GPIO	pins;
-	uint8_t devAddress;
-	uint8_t in_data;	
-	uint8_t out_data;	
-	
-}pca9539a_t;
+//typedef struct 
+//{
+//	IIC_GPIO	pins;
+//	uint8_t devAddress;
+//	uint8_t in_data;	
+//	uint8_t out_data;	
+//	
+//}pca9539a_t;
 
-extern pca9539a_t pca9539a_1;
-extern pca9539a_t pca9539a_2;
+//extern pca9539a_t pca9539a_1;
+//extern pca9539a_t pca9539a_2;
 
-void dido_pca9539a_init(void);
-
-uint8_t getChInput(uint8_t channel);
-void setChOutput(uint8_t channel, uint8_t setval);
-//uint8_t  CMD_int(char *Commands);
-//uint8_t  CMD_out(char *Commands);
+//void dido_pca9539a_init(void);
 
 #endif

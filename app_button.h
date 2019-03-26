@@ -8,5 +8,9 @@ extern uint8_t buttonRESETpressed;
 
 int buttonSTART(int argc, char **argv);
 
+void buttonSTART_process(uint8_t inCh, uint8_t outCh);
+
+void buttonRESET_process(uint8_t inCh, uint8_t outCh);
+
 #endif
 

@@ -1,7 +1,9 @@
 #ifndef __INC_MBTMC429__H
 #define __INC_MBTMC429__H
 
-#include "bsp_defines.h"
+#include "bsp_include.h"
+
+//OSE 8MHZ  USE UART2	SPI1
 
 #define INPUT1	PBin(5)
 #define INPUT2	PBin(6)
@@ -38,18 +40,21 @@
 //	0xA0,
 //};
 //#define LED_PIN								 PD_7
+#if defined(USING_INC_MBTMC429) 
 
-//#define CS_PIN_TMC429 		 		 PC_4
-//#define SELECT_TMC429()        GPIOC->BRR=BIT4
-//#define DESELECT_TMC429()      GPIOC->BSRR=BIT4
-											
-//#define POSCMP1_PIN		91
-//#define	INTOUT1_PIN		92	
+	#define CS_PIN_TMC429 		 		 PC_4
+	#define SELECT_TMC429()        GPIOC->BRR=BIT4
+	#define DESELECT_TMC429()      GPIOC->BSRR=BIT4
+												
+	#define POSCMP1_PIN		91
+	#define	INTOUT1_PIN		92	
 
-//#define	MX_SPI_Init			  MX_SPI1_Init					
-//#define	ReadWriteSPI			ReadWriteSPI1	
+	#define	MX_SPI_Init			  MX_SPI1_Init					
+	#define	ReadWriteSPI			ReadWriteSPI1	
 
-//extern uint8_t homeSensorPin[3];
+	extern uint8_t homeSensorPin[3];
+#endif
+
 extern uint8_t inputs_pin_num[12];
 extern uint8_t outputs_pin_num[8];
 extern uint8_t rgb_pin_num[3];

@@ -9,6 +9,9 @@ UCHAR ProID=COMMON;
 
 int motorPosition[3];
 uint8_t autoRESETmotor=FALSE;
+uint8_t TimerOpened=0;
+
+
 
 void xstrcat(char *str1,char *str2)
 {
@@ -36,40 +39,80 @@ void LoadParam(void)
 {
 	at24cxx.read(at24c256 , PARAM_ADDR, (uint8_t *)&g_tParam, sizeof(PARAM_T));
 	//ee_ReadBytes((uint8_t *)&g_tParam, PARAM_ADDR, sizeof(PARAM_T));
-	DEBUG_TRACE("read data from eeprom when power up\n");
-	DEBUG_TRACE("g_tParam.Baudrate=%d\n",g_tParam.SlaveBaudrate);
-	DEBUG_TRACE("g_tParam.Project_ID=%d\n",g_tParam.Project_ID);
-	DEBUG_TRACE("g_tParam.tmc429_VMax[0]=%d\n",g_tParam.tmc429_VMax[0]);
-	DEBUG_TRACE("g_tParam.speed_home[1]=%d\n",g_tParam.speed_home[1]);
-	DEBUG_TRACE("g_tParam.speed_home[2]=%d\n",g_tParam.speed_home[2]);
+//	DEBUG_TRACE("read data from eeprom when power up,fw ver:%d\n",g_tParam.ParamVer);
+//	DEBUG_TRACE("g_tParam.Baudrate=%d\n",g_tParam.SlaveBaudrate);
+//	DEBUG_TRACE("g_tParam.Project_ID=%d\n",g_tParam.Project_ID);
+//	DEBUG_TRACE("g_tParam.tmc429_VMax[0]=%d\n",g_tParam.tmc429_VMax[0]);
+//	DEBUG_TRACE("g_tParam.speed_home[1]=%d\n",g_tParam.speed_home[1]);
+//	DEBUG_TRACE("g_tParam.speed_home[2]=%d\n",g_tParam.speed_home[2]);
 	if (g_tParam.ParamVer != PARAM_VER)
 	{
 		g_tParam.ParamVer   = PARAM_VER;
 		g_tParam.MasterBaudrate  = 115200;
 		g_tParam.SlaveBaudrate   = 115200;
 		g_tParam.Project_ID = COMMON;
+	
+#if defined(USING_INC_MBTMC429) 
 		
-		
-		g_tParam.tmc429_VMax[0] = 2000;
-		g_tParam.tmc429_AMax[0] = 2047;
-		g_tParam.tmc429_PulseDiv[0]=6;
+		g_tParam.tmc429_VMax[0] = 839;
+		g_tParam.tmc429_AMax[0] = 1000;
+		g_tParam.tmc429_PulseDiv[0]=5;
 		g_tParam.tmc429_RampDiv[0]=8;
-		g_tParam.speed_home[0]=2000;
+		g_tParam.speed_home[0]=839;
 
-		g_tParam.tmc429_VMax[1] = 2000;
-		g_tParam.tmc429_AMax[1] = 2047;
-		g_tParam.tmc429_PulseDiv[1]=6;
+		g_tParam.tmc429_VMax[1] = 839;
+		g_tParam.tmc429_AMax[1] = 1000;
+		g_tParam.tmc429_PulseDiv[1]=5;
 		g_tParam.tmc429_RampDiv[1]=8;
-		g_tParam.speed_home[1]=2000;
+		g_tParam.speed_home[1]=839;
 
 
-		g_tParam.tmc429_VMax[2] = 2000;
-		g_tParam.tmc429_AMax[2] = 2047;
-		g_tParam.tmc429_PulseDiv[2]=6;
+		g_tParam.tmc429_VMax[2] = 839;
+		g_tParam.tmc429_AMax[2] = 1000;
+		g_tParam.tmc429_PulseDiv[2]=5;
 		g_tParam.tmc429_RampDiv[2]=8;
-		g_tParam.speed_home[2]=2000;
+		g_tParam.speed_home[2]=839;
+		
+#endif
+
+#if defined(USING_INC_MB1616DEV6) 
+		
+		g_tParam.tmc429_VMax[0] = 839;
+		g_tParam.tmc429_AMax[0] = 1000;
+		g_tParam.tmc429_PulseDiv[0]=5;
+		g_tParam.tmc429_RampDiv[0]=8;
+		g_tParam.speed_home[0]=839;
+
+		g_tParam.tmc429_VMax[1] = 839;
+		g_tParam.tmc429_AMax[1] = 1000;
+		g_tParam.tmc429_PulseDiv[1]=5;
+		g_tParam.tmc429_RampDiv[1]=8;
+		g_tParam.speed_home[1]=839;
+
+
+		g_tParam.tmc429_VMax[2] = 839;
+		g_tParam.tmc429_AMax[2] = 1000;
+		g_tParam.tmc429_PulseDiv[2]=5;
+		g_tParam.tmc429_RampDiv[2]=8;
+		g_tParam.speed_home[2]=839;
+		
+#endif
+
+
 
 		SaveParam();						
+	}
+	
+	ProID=g_tParam.Project_ID;
+	
+	switch(ProID)
+	{
+		case BUTTON_ROAD: 
+			DEBUG_TRACE("fixture type: button road\n");
+			break;
+		default:
+			DEBUG_TRACE("fixture type: common user\n");
+		break;
 	}
 }
 
@@ -156,18 +199,12 @@ void SetAmaxAutoByspeed(u8 axisNum,int speed)
 	}
 	else if(MotorConfig[axisNum].PulseDiv==5 &&	MotorConfig[axisNum].RampDiv==8)
 	{
-		if (speed<25)	//1~24
-		{		SetAMax(axisNum, speed);	MotorConfig[axisNum].AMax=speed;}			
-		else if (speed<50)
-		{		SetAMax(axisNum, speed+5);	MotorConfig[axisNum].AMax=speed+5;}
-		else if (speed<100)
-		{		SetAMax(axisNum, 100);	MotorConfig[axisNum].AMax=100;}
-		else if (speed<150)
-		{		SetAMax(axisNum, 500);MotorConfig[axisNum].AMax=500;}
-		else if (speed<250)
-		{		SetAMax(axisNum, 1000);MotorConfig[axisNum].AMax=1000;}
-		else if (speed<2047)
-		{		SetAMax(axisNum, 2047);MotorConfig[axisNum].AMax=2047;}	
+		if (speed==70)										MotorConfig[axisNum].AMax=200;	//0.05s-->210---0.5/S
+		else if (speed<50)								MotorConfig[axisNum].AMax=speed;	
+		else if (49<speed && speed<105)		MotorConfig[axisNum].AMax=speed*2;	
+		else if (104<speed && speed<210)	MotorConfig[axisNum].AMax=speed*3;		
+		else 															MotorConfig[axisNum].AMax=2000;	
+		SetAMax(axisNum, MotorConfig[axisNum].AMax);
 	}
 
 	else if(MotorConfig[axisNum].PulseDiv==7&&	MotorConfig[axisNum].RampDiv==10)
@@ -231,22 +268,27 @@ ROAD			 ：Z轴先上后下
 	
 */
 void MotorAutoReset_preset( void )
-{														
+{	
+	timer_stop();	
+	autoRESETmotor=TRUE;
 	//设置回原点速度模式下的最大速度和加速度
+	MotorStop(0);MotorStop(1);MotorStop(2);
 	Write429Int(IDX_VMAX|MOTOR0, 2047);		
 	Write429Int(IDX_VMAX|MOTOR1, 2047);			
 	Write429Int(IDX_VMAX|MOTOR2, 2047);		
 	
 	for(uint8_t i=0;i<3;i++)
 	{
-		SetAMax(i, 2000);
+//		SetAMax(i, 2000);
 		homeInfo.Homed[i]=FALSE;
 		homeInfo.GoHome[i]=FALSE;
 		homeInfo.GoLimit[i]=FALSE;
-		//homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];	
+		SetAmaxAutoByspeed(i,g_tParam.speed_home[i]);
+		//		SetAMax(i, 2000);
+//		homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];	
 	}
-	CMD_TRACE("motor start to reset...\n");
 	
+						
 	switch(ProID)
 	{
 		case BUTTON_OFFLINE:				
@@ -257,9 +299,19 @@ void MotorAutoReset_preset( void )
 				break;
 				 
 		case BUTTON_ROAD:
-				 homeInfo.GoHome[AXIS_Z]=TRUE;
-				 RotateLeft(AXIS_Z,homeInfo.HomeSpeed[AXIS_Z]);		//逆时针旋转		L		Z轴先复位		Z轴先上后下
-				break;	
+			
+				 ActualCommand.Motor=AXIS_Z;
+				 homeInfo.GoHome[ActualCommand.Motor]=TRUE;
+				 homeInfo.GoLimit[ActualCommand.Motor]=FALSE;
+				 homeInfo.Homed[ActualCommand.Motor]=FALSE;
+				 homeInfo.HomeSpeed[ActualCommand.Motor]=-g_tParam.speed_home[ActualCommand.Motor];
+				 ActualCommand.Value.Int32=homeInfo.HomeSpeed[ActualCommand.Motor];	 
+		     TMCL_MotorRotate();				
+				//RotateLeft(AXIS_Z,-homeInfo.HomeSpeed[AXIS_Z]);		//逆时针旋转		L		Z轴先复位		Z轴先上后下
+				 CMD_TRACE("motor[%d] is start go home by searching home sensor\n",ActualCommand.Motor);
+				 timer_start();
+		break;	
+		
 		default:
 			break;
 	}
@@ -292,7 +344,23 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void timer_motorSensorCheck_init(void)
 {
 	MX_TIM1_Init();
-	//HAL_TIM_Base_Start_IT(&htim1);
+	//timer_start();
+}
+void timer_start(void)
+{
+	if(TimerOpened==0)
+	{
+		TimerOpened=1;
+		HAL_TIM_Base_Start_IT(&htim1);
+	}
+}
+void timer_stop(void)
+{
+	if(TimerOpened==1)
+	{
+		TimerOpened=0;
+		HAL_TIM_Base_Stop_IT(&htim1);
+	}
 }
 
 void Error_Handler(void)

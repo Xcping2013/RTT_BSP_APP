@@ -1,16 +1,33 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 
+#if defined(USING_INC_MB1616DEV6) 
+
+typedef struct 
+{
+	IIC_GPIO	pins;
+	uint8_t devAddress;
+	uint8_t in_data;	
+	uint8_t out_data;	
+	
+}pca9539a_t;
+
+pca9539a_t pca9539a_1;
+pca9539a_t pca9539a_2;
+
+uint8_t homeSensorPin[3]={PD_12,PD_10,PD_11};
+
 static rt_timer_t timer1;
 static rt_uint8_t out_flash_on[16]={0};
 static rt_uint8_t out_flash_value[16]={0};
 static rt_uint16_t out_flash_delay[16]={0};
 static rt_uint16_t out_flash_cnt[16]={0};
 
+static void dido_pca9539a_init(void);
 static int timer_10ms_init(void);
 static void timeout1(void *parameter);
 
-static void PCA9539A_Init(pca9539a_t dev)
+void PCA9539A_Init(pca9539a_t dev)
 {
 	SoftI2c.pin_init(dev.pins);
 	
@@ -260,7 +277,7 @@ static void timeout1(void *parameter)
 	}	
 }
 //
-
+#endif
 /******************			INPUT & OUTPUT<---**************************
 */
 

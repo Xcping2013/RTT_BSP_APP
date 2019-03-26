@@ -1,0 +1,24 @@
+一.MDK工程	INC-MBTMC429.uvprojx
+  在目录	INC-MBTMC429-RTT\rt-thread\bsp\stm32f10x-HAL下
+
+二.用户自定义函数的调用（可参考app/myFinsh.c）
+
+1.初始化函数的调用：
+  INIT_APP_EXPORT(user_init_func);
+  
+2.应用函数在串口中的调用：
+  //用户函数名小于16个字符时：
+  FINSH_FUNCTION_EXPORT(函数名，函数说明)
+  ex:FINSH_FUNCTION_EXPORT(user_app_func,user app function example);
+  //用户函数名大于16个字符时：
+  FINSH_FUNCTION_EXPORT(函数名，别名，函数说明)
+  FINSH_FUNCTION_EXPORT_ALIAS(user_app1,user_app_function,user app function example);
+  
+3.任务的创建可参考led.c中的led_thread_init函数
+
+
+
+
+
+
+

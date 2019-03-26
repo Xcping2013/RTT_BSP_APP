@@ -29,7 +29,7 @@
 #define N_O_MOTORS 				 		 3                          			//!< number of motors supported by this module
 	
 #define PARAM_ADDR		0			
-#define PARAM_VER			0x00000100					
+#define PARAM_VER			0x00000102					
 
 /* 全局参数 */
 typedef struct
@@ -136,8 +136,13 @@ void SaveParam(void);
 extern int motorPosition[3];
 extern uint8_t autoPULLdata;
 extern uint8_t autoRESETmotor;
+extern uint8_t TimerOpened;
 
 int ParamSave(int argc, char **argv);
+
+
+void timer_start(void);
+void timer_stop(void);
 
 void MotorAutoReset_preset( void );
 void timer_motorSensorCheck_init(void);

@@ -5,6 +5,7 @@
 
 void rt_hw_tmc429_init(void);
 
+uint8_t TMCL_MotorRotate(void);
 void RotateRight(uint8_t axisNum , int speed);
 void RotateLeft(uint8_t axisNum , int speed);
 void MotorStop(uint8_t axisNum);

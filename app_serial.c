@@ -4,7 +4,7 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 
-#define uart3_rx_len_max 12
+#define uart_rx_len_max 12
 
 uint8_t autoPULLdata=FALSE;
 
@@ -13,10 +13,15 @@ static struct rt_semaphore rx_sem;
 static rt_device_t serial;
 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT; 
 
-//char uart3_name[]="uart3";
-static char uart3_name[]="uart2";
-static char uart3_rx_buff[200];
-static uint8_t uart3_rx_len_index=0;
+
+#if defined(USING_INC_MB1616DEV6) 
+char uart_name[]="uart2";  
+#endif
+#if defined(USING_INC_MBTMC429) 
+static char uart_name[]="uart3";
+#endif
+static char uart_rx_buff[200];
+static uint8_t uart_rx_len_index=0;
 static uint8_t FirstDataOut=0;
 static uint8_t motorSpeedCnt=0;
 
@@ -35,36 +40,37 @@ static void serial_thread_entry(void *parameter)
         {
             rt_sem_take(&rx_sem, RT_WAITING_FOREVER);
         }	
-				if(Read429Short(IDX_VACTUAL|(1<<5)) ==0)				//读取信息的时候如果被其他中断调用（比如一直UART1中断命令），则SPI读取值出问题
+				if(Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) ==0)				//读取信息的时候如果被其他中断调用（比如一直UART1中断命令），则SPI读取值出问题
 				{
 					if(motorSpeedCnt++>3)
 					{
 						motorSpeedCnt=0;
 						rt_device_close(serial);
 						if(autoPULLdata==TRUE)	autoPULLdata=FALSE;
-						rt_kprintf("motor[1] is stop and stop printing data\n>>");
+						rt_kprintf("motor[2] is stop and stop printing data\n>>");
 					}
-				}				
-				if(uart3_rx_len_index < uart3_rx_len_max)
+				}
+				else if(motorSpeedCnt!=0) motorSpeedCnt--;
+				if(uart_rx_len_index < uart_rx_len_max)
         {
 					if(ch=='\r' || ch=='\n' )	
 					{
-						//DEBUG_TRACE("read data from uart3:%s\n", uart3_rx_buff);				
-						uart3_rx_buff[uart3_rx_len_index]='\0';
+						//DEBUG_TRACE("read data from uart3:%s\n", uart_rx_buff);				
+						uart_rx_buff[uart_rx_len_index]='\0';
 //						get_motor_position();
-						motorPosition[1]=Read429Int(IDX_XACTUAL|(1<<5));
+						motorPosition[AXIS_Z]=Read429Int(IDX_XACTUAL|(AXIS_Z<<5));
 						if(FirstDataOut<3)	FirstDataOut++;
 						else 
-						rt_kprintf("P[1]=%d,Press%s\n",motorPosition[1],&uart3_rx_buff);								
-						uart3_rx_len_index=0;
-						memset(uart3_rx_buff, '\0', uart3_rx_len_max);
+						rt_kprintf("P[2]=%d,Press%s\n",motorPosition[AXIS_Z],&uart_rx_buff);								
+						uart_rx_len_index=0;
+						memset(uart_rx_buff, '\0', uart_rx_len_max);
 					}	
-					else 	uart3_rx_buff[uart3_rx_len_index++]=ch;	//读取串口缓冲器
+					else 	uart_rx_buff[uart_rx_len_index++]=ch;	//读取串口缓冲器
 				}
 				else 
 				{
-					uart3_rx_len_index=0;
-					memset(uart3_rx_buff,'\0', uart3_rx_len_max);	
+					uart_rx_len_index=0;
+					memset(uart_rx_buff,'\0', uart_rx_len_max);	
 				}
 
     }
@@ -73,11 +79,11 @@ static void serial_thread_entry(void *parameter)
 int uart_PressPos_thread_init(void)
 {
     rt_err_t ret = RT_EOK;
-		memset(uart3_rx_buff, '\0', uart3_rx_len_max);
-    serial = rt_device_find(uart3_name);
+		memset(uart_rx_buff, '\0', uart_rx_len_max);
+    serial = rt_device_find(uart_name);
     if (!serial)
     {
-        rt_kprintf("find %s failed!\n",uart3_name);
+        rt_kprintf("find %s failed!\n",uart_name);
         return RT_ERROR;
     }
 //		config.baud_rate = g_tParam.SlaveBaudrate;

@@ -73,7 +73,7 @@ static uint8_t MotorStopByLimit[3]={1,1,1};														//碰到限位处理一次
 		
 
 static void RampInit(void);
-static uint8_t TMCL_MotorRotate(void);
+//static uint8_t TMCL_MotorRotate(void);
 static uint8_t TMCL_MotorStop(void);
 static uint8_t TMCL_MoveToPosition(void);
 static void TMCL_GetAxisParameter(void);
@@ -107,6 +107,10 @@ void  rt_hw_tmc429_init(void)
   pinMode(INTOUT1_PIN, GPIO_Mode_IPU);	
 	
 	MX_SPI_Init();
+#if defined(USING_INC_MBTMC429) 
+	MX_TIM3_Init();	
+	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+#endif
 	RampInit();
 	Init429();
 	for(uint8_t i=0;i<3;i++)
@@ -167,11 +171,11 @@ void MotorStop(uint8_t axisNum)
   \fn RotateRight(void)
   \brief Command ROR (see TMCL manual)
 ********************************************************************/
-static uint8_t TMCL_MotorRotate(void)
+uint8_t TMCL_MotorRotate(void)
 {
   if(ActualCommand.Motor<N_O_MOTORS)
   {
-		MotorStopByLimit[ActualCommand.Motor]=1;
+		//MotorStopByLimit[ActualCommand.Motor]=1;
 		
     SpeedChangedFlag[ActualCommand.Motor]=TRUE;
     Set429RampMode(ActualCommand.Motor, RM_VELOCITY);
@@ -217,7 +221,7 @@ static uint8_t TMCL_MoveToPosition(void)
   {
     if(ActualCommand.Type==MVP_ABS || ActualCommand.Type==MVP_REL)
     {
-			MotorStopByLimit[ActualCommand.Motor]=1;
+			//MotorStopByLimit[ActualCommand.Motor]=1;
 			
       if(SpeedChangedFlag[ActualCommand.Motor])
       {
@@ -565,7 +569,7 @@ int motor(int argc, char **argv)
 			{
 				if(!TMCL_MotorStop())
 				{
-					if(ActualCommand.Motor==1) autoPULLdata=FALSE;
+					if(ActualCommand.Motor==AXIS_Z) autoPULLdata=FALSE;
 					delay_ms(1);
 					return RT_EOK	;
 				}
@@ -599,7 +603,7 @@ int motor(int argc, char **argv)
 			}
 			if (!strcmp(argv[1], "gohome"))
 			{
-					HAL_TIM_Base_Start_IT(&htim1);
+					timer_stop();		
 				
 					ActualCommand.Motor=atoi(argv[2]);
 					homeInfo.GoHome[ActualCommand.Motor]=TRUE;
@@ -610,13 +614,14 @@ int motor(int argc, char **argv)
 					if(ActualCommand.Value.Int32<0) {SetAmaxAutoByspeed(ActualCommand.Motor,-ActualCommand.Value.Int32);}
 					else														{SetAmaxAutoByspeed(ActualCommand.Motor,ActualCommand.Value.Int32);}
 				  TMCL_MotorRotate();
-					CMD_TRACE("motor[%d] is start go home by searching home sensor\n");
+					CMD_TRACE("motor[%d] is start go home by searching home sensor\n",ActualCommand.Motor);
 				  //电机回原点速度需要保存，下次复位按键需要调用，或者按键默认速度
+					timer_start();
 					return RT_EOK	;
 			}
 			if (!strcmp(argv[1], "golimit"))
 			{
-					HAL_TIM_Base_Start_IT(&htim1);
+					timer_stop();
 				
 					ActualCommand.Motor=atoi(argv[2]);
 				  homeInfo.GoHome[ActualCommand.Motor]=FALSE;
@@ -627,6 +632,7 @@ int motor(int argc, char **argv)
 					if(ActualCommand.Value.Int32<0) {SetAmaxAutoByspeed(ActualCommand.Motor,-ActualCommand.Value.Int32);}
 					else														{SetAmaxAutoByspeed(ActualCommand.Motor,ActualCommand.Value.Int32);}
 				  TMCL_MotorRotate();
+					timer_start();
 					return RT_EOK	;
 			}
 			else if (!strcmp(argv[1], "get"))
