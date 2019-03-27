@@ -55,7 +55,7 @@ softStop_flag,
 ramp_divisor,
 pulse_divisor,	
 limitSignal,
-
+home_SenS,
 is_homed,
 is_stop,
 is_reset,
@@ -369,6 +369,9 @@ static void TMCL_GetAxisParameter(void)
 			case is_stop:
 				CMD_TRACE("motor[%d] stop=%d\n",ActualCommand.Motor,Read429Short(IDX_VACTUAL|(ActualCommand.Motor<<5))? 0:1) ;
 				break;
+			case home_SenS:
+				CMD_TRACE("motor[%d] homeSensor=%d\n",ActualCommand.Motor, rt_pin_read(homeSensorPin[ActualCommand.Motor]) ? 0:1) ;
+				break;						
       default:
         ActualReply.Status=REPLY_WRONG_TYPE;
         break;
@@ -651,6 +654,8 @@ int motor(int argc, char **argv)
 				if (!strcmp(argv[2], "rightLimit")) 			ActualCommand.Type=rightLimit_SwS;
 				if (!strcmp(argv[2], "leftLimit")) 				ActualCommand.Type=leftLimit_SwS;
 				
+				if (!strcmp(argv[2], "homeSensor")) 			ActualCommand.Type=home_SenS;
+				
 				if (!strcmp(argv[2], "rightLimit?"))			  ActualCommand.Type=rightLimit_disable;
 				if (!strcmp(argv[2], "leftLimit?")) 			  ActualCommand.Type=leftLimit_disable;
 				
@@ -680,6 +685,7 @@ int motor(int argc, char **argv)
 					
 					  rt_kprintf("motor get is_homed <axis>          -is axis homed or not\n");	
 					  rt_kprintf("motor get is_stop <axis>           -is axis stop or not\n");	
+						rt_kprintf("motor get homeSensor <axis>        -get home sensor status\n");	
 					//µ÷ÊÔ½Ó¿Ú
 					CMD_TRACE("motor get next_speed <axis>        -get the target speed \n");
 					CMD_TRACE("motor get next_position <axis>     -get the target position to move\n");

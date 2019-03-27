@@ -32,7 +32,7 @@ void MX_TIM1_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 10;
+  htim1.Init.Prescaler = 100;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 7200;	//72=1us  3600=50us
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

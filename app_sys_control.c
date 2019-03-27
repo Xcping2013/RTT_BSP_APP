@@ -327,9 +327,12 @@ void TIM1_UP_IRQHandler(void)
 	rt_interrupt_leave();
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
-//1ms
+//10ms
 //static uint16_t cnt_delay;
 //static uint16_t cnt;
+/*
+V-2000=2000/140=14.2mm/s   =0.14mm/10ms   840 0.05mm  20ms---0.01mm 使用软件定时器10ms也没问题 
+*/
 static uint8_t chenckSensorDelay=0;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
