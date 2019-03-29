@@ -1,0 +1,42 @@
+基于 RT-Thread nano 软件包实现 shell 功能
+
+1.CubeMX：用于shell的串口不需要配置中断,但需要开中断
+
+   help ->  Check for updates ->Install now
+   help ->  Manage embedded software packages
+           ->  From Url
+           ->  User Defined Packs Manager
+           ->  new
+           ->  https://www.rt-thread.org/download/cube/RealThread.RT-Thread.pdsc
+           ->  check
+           ->  Install now
+
+           ->  Additional Softwares
+
+           ->  Hard fault interrupt Pendable request Time base :System tick timer
+	Code not generation
+
+2. shell
+
+#define SOC_SERIES_STM32F1
+#define BSP_USING_UART1
+
+必须使用RT_USING_COMPONENTS_INIT+7K和main
+rt_hw_board_init 函数中的系统时钟配置后
+
+#ifdef RT_USING_SERIAL
+    extern void rt_hw_usart_init();
+    rt_hw_usart_init();
+#endif 
+
+https://github.com/RT-Thread/rt-thread/blob/master/bsp/stm32/libraries/HAL_Drivers/drv_usart.c
+    //#include "board.h"
+    //#include "drv_config.h"
+    //#include <drv_log.h>
+https://github.com/RT-Thread/rt-thread/blob/master/bsp/stm32/libraries/HAL_Drivers/drv_usart.h
+    //#include <drv_common.h>
+    //#include "drv_dma.h"
+ #include "stm32l4xx_hal.h" 
+ #include "uart_config.h"
+https://github.com/RT-Thread/rt-thread/blob/master/bsp/stm32/libraries/HAL_Drivers/config/l4/uart_config.h
+

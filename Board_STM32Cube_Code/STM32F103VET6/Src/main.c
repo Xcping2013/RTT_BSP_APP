@@ -27,7 +27,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdlib.h>		//abs strtol
+#include "bsp_include.h"	
+#include "app_include.h"
+#include "app_Commands.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +61,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+at24cxx_t at24c256=
+{
+	{0},
+	{PB_4,PB_3},	//SDA SCL
+	0xA0,
+};
 /* USER CODE END 0 */
 
 /**
@@ -91,15 +98,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-//  MX_USART3_UART_Init();
+  MX_USART3_UART_Init();
+  MX_SPI1_Init();
+  MX_TIM3_Init();
+  MX_TIM1_Init();
+  MX_SPI2_Init();
   MX_USART1_UART_Init();
-//  MX_SPI1_Init();
-//  MX_TIM3_Init();
-//  MX_TIM1_Init();
-//  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
+	__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
+	
+	at24cxx_hw_init();
+	HAL_Delay(50);
+	
 	tickLedstart=HAL_GetTick();
 	tickBeepstart=HAL_GetTick();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -107,6 +120,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+		CommandCheckAndExe();
 		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
 		{
 			HAL_GPIO_TogglePin(LED_SYS_GPIO_Port,LED_SYS_Pin);
@@ -125,9 +141,9 @@ int main(void)
 			}
 		}
 		FlexButtonTest_APP();
-    /* USER CODE BEGIN 3 */
   }
 	
+
   /* USER CODE END 3 */
 }
 
@@ -169,6 +185,8 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
 
 /* USER CODE END 4 */
 

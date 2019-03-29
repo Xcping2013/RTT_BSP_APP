@@ -1,5 +1,6 @@
 --cpu Cortex-M3
 "stm32f103vet6\startup_stm32f103xe.o"
+"stm32f103vet6\app_mbtmc429.o"
 "stm32f103vet6\main.o"
 "stm32f103vet6\gpio.o"
 "stm32f103vet6\spi.o"
@@ -7,7 +8,6 @@
 "stm32f103vet6\usart.o"
 "stm32f103vet6\stm32f1xx_it.o"
 "stm32f103vet6\stm32f1xx_hal_msp.o"
-"stm32f103vet6\app_mbtmc429.o"
 "stm32f103vet6\stm32f1xx_hal_gpio_ex.o"
 "stm32f103vet6\stm32f1xx_hal_spi.o"
 "stm32f103vet6\stm32f1xx_hal_spi_ex.o"
@@ -24,6 +24,14 @@
 "stm32f103vet6\stm32f1xx_hal_flash.o"
 "stm32f103vet6\stm32f1xx_hal_flash_ex.o"
 "stm32f103vet6\system_stm32f1xx.o"
+"stm32f103vet6\app_eeprom_24xx.o"
+"stm32f103vet6\bsp_eeprom_24xx.o"
+"stm32f103vet6\bsp_mcu_delay.o"
+"stm32f103vet6\bsp_mcu_gpio.o"
+"stm32f103vet6\bsp_mcu_softi2c.o"
+"stm32f103vet6\app_sys_control.o"
+"stm32f103vet6\app_commands.o"
+"stm32f103vet6\app_serial.o"
 --library_type=microlib --strict --scatter "STM32F103VET6\STM32F103VET6.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
