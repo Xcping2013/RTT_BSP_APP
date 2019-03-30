@@ -52,26 +52,67 @@
 	#include "bsp_tmc429.h"
 #endif
 
-//#include "bsp_user_lib.h"
-//#include "bsp_timer.h"
-//#include "bsp_tim_pwm.h"
-//#include "bsp_spi.h"
-//#include "bsp_uart.h"
-//#include "bsp_key.h"
-//#include "bsp_led.h"
-//#include "bsp_beep.h"
-//#include "input_output.h"
-//#include "bsp_i2c_gpio.h"
-//#include "bsp_eeprom_24xx.h"
-//#include "param_mbtmc429.h"
-//#include "bsp_tmc429.h"
-//#include "bsp_cpu_rtc.h"
-//#include "bsp_cpu_flash.h"
-//#include "bsp_msg.h"
+//#define CALENDAR_USED
+//#define MCP3421_USED
+//#define AT24CXX_USED
+//#define W25QXX_USED
+//#define L6480_USED
+//#define LOGIC_USED
+//#define ISL29125_USED
+//#define DS18B20_USED
+//#define EXIT_USED
+//#define TM1638_USED
+
+#ifdef MCP3421_USED
+	#include "MCP3421.h"
+#endif
+
+#ifdef AT24CXX_USED
+	#include "at24cxx.h"
+	#include "mcu_softI2c.h"
+#endif
+
+#ifdef W25QXX_USED
+	#include "mcu_spi.h"
+	#include "w25qxx.h" 
+#endif
+
+#ifdef L6480_USED
+	#include "l6480_config.h"
+	#include "l6480.h"
+#endif
+
+#ifdef LOGIC_USED
+	#include "74HC165.h"
+	#include "74HC595.h"
+#endif
+
+#ifdef ISL29125_USED
+	#include "isl29125.h"
+#endif
+
+#ifdef CALENDAR_USED
+	#include "mcu_rtc.h"
+	#include "Calendar.h"
+#endif
+
+#ifdef DS18B20_USED
+	#include "ds18b20.h"
+#endif
+
+#ifdef EXIT_USED
+	#include "mcu_exit.h"
+#endif
+
+#ifdef TM1638_USED
+	#include "tm1638.h"
+#endif
 
 
-//void bsp_Init(void);
-//void bsp_Idle(void);
+
+
+
+
 
 #endif
 

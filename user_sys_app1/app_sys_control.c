@@ -9,6 +9,21 @@ int motorPosition[3];
 uint8_t autoRESETmotor=FALSE;
 uint8_t TimerOpened=0;
 
+uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
+{
+	while (BufferLength--)
+  {
+    if ((*pBuffer1) != *pBuffer2)
+    {
+      return BufferLength;
+    }
+    pBuffer1++;
+    pBuffer2++;
+  }
+
+  return 0;
+}
+
 UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
 {
 	u8 aRxBuffer=0;

@@ -5,10 +5,48 @@
 //#include "app_sys_control.h"	
 //#include "inc_mbtmc429.h"
 //CubeMX txt
-uint8_t inputs_pin_num[12]={91,92,93,95,96,97,98,1,2,3,4,5};
-uint8_t outputs_pin_num[8]={77,78,79,80,81,82,83,84};
-uint8_t rgb_pin_num[3]={85,86,87};
-uint8_t homeSensorPin[3]={96,97,98};
+
+uint8_t	inputs_pin_num[INPUT_COUNT]=
+{
+	PB_5,	//IN1
+	PB_6, //IN2
+	PB_7, //IN3
+	PB_8,	//IN4
+	PB_9,	//IN5	---HOME0
+	PE_0,	//IN6	---HOME1
+	PE_1,	//IN7	---HOME2
+	PE_2,	//IN8
+	PE_3,	//IN9
+	PE_4,	//IN10
+	PE_5,	//IN11
+	PE_6,	//IN12
+	
+//PB_1,
+//PD_8,
+//PD_12,
+//PD_9,
+//PB_15,
+//PB_13,
+};  
+uint8_t	outputs_pin_num[OUTPUT_COUNT]=
+{
+	PA_15	 ,
+	PC_10  ,
+	PC_11	 ,
+	PC_12	 ,
+	PD_0	 ,
+	PD_1	 ,
+	PD_2   ,
+	PD_3   ,
+//	PB_14  ,
+//	PD_10  ,
+//	PD_13  ,
+//	PD_11  ,
+//	PE_14  ,
+//	PE_15	 ,
+};
+uint8_t rgb_pin_num[3]={PD_6,PD_5,PD_4};
+uint8_t homeSensorPin[3]={PB_9,PE_0,PE_1};
 
 #if defined(USING_INC_MBTMC429) 
 
@@ -42,6 +80,10 @@ void dido_gpio_init(void)
 uint8_t getChInput(uint8_t channel)
 {
 	return rt_pin_read(inputs_pin_num[channel-1]) ? 1:0 ;
+}
+uint8_t getOutput(uint8_t channel)
+{
+	return OUT1_GPIO_Port->ODR & OUT1_Pin ? 1:0 ;
 }
 void setChOutput(uint8_t channel, uint8_t setval)
 {
@@ -155,7 +197,7 @@ int output(int argc, char **argv)
 	CMD_TRACE("Usage: \n");
 	CMD_TRACE("output on <ch>  - set the output channel on\n");
 	CMD_TRACE("output off <ch>     - set the output channel off\n");
-	CMD_TRACE("output toggle <delay_time>  - start or stop output toggle per time x10ms\n");
+	CMD_TRACE("output toggle <ch> <delay_time>  - start or stop output toggle per time x10ms\n");
 	return -RT_ERROR;
 }
 
@@ -181,7 +223,7 @@ static void timeout1(void *parameter)
 			{
 				pinToggle(outputs_pin_num[i]);
 			}		
-			DEBUG_TRACE("out%d is flashing\n",i+1);	
+			//DEBUG_TRACE("out%d is flashing\n",i+1);	
 			out_flash_cnt[i]=0;
 		}
 	}	

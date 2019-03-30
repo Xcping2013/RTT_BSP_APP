@@ -129,7 +129,7 @@ UCHAR ReadWriteSPI2(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer);
 
 /* USER CODE BEGIN Prototypes */
 void xstrcat(char *str1,char *str2);
-
+uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength);
 void reboot(void);
 	
 void LoadParam(void);
