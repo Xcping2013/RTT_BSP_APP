@@ -30,7 +30,7 @@ void at24cxx_hw_init(void)
 	{
 		//EEPROM_TRACE("eeprom at24c256 init...ok\r\n");
 	}	
-	LoadParam();
+	LoadParamFromEeprom();
 }
 
 #if defined(USING_RTT)

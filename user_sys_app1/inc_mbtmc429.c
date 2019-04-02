@@ -29,19 +29,21 @@ at24cxx_t at24c256=
 
 int mbtmc429_hw_init(void)
 {		
-	led_thread_init();
-	dido_gpio_init();
+	SysRunLed_thread_init();
+	
+	dido_hw_init();
 	at24cxx_hw_init();
 	
-	rt_hw_tmc429_init();
-	timer_motorSensorCheck_init();	
-	motion_thread_init();
+	tmc429_hw_init();
+	
+	MotorSensorCheck_timer_init();	
+	MotorLimitCheck_thread_init();
 
-	uart_PressPos_thread_init();	
+	uart_stream_thread_init();	
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	//rt_kprintf("fixture init ok\n");
+	rt_kprintf("\nfirmware ver1.02 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }

@@ -5,7 +5,7 @@
 
 extern uint8_t LED_PIN;
 	
-int led_thread_init(void);
+int SysRunLed_thread_init(void);
 
 #endif
 

@@ -3,7 +3,7 @@
 
 #include "bsp_mcu_gpio.h"
 
-void dido_gpio_init(void);
+void dido_hw_init(void);
 int readinput(int argc, char **argv);
 int output(int argc, char **argv);
 int rgb(int argc, char **argv);

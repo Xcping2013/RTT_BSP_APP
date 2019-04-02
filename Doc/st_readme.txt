@@ -1,15 +1,6 @@
-STD
+1.
+//				else if(motorSpeedCnt!=0) motorSpeedCnt--;
+				else motorSpeedCnt=0;
+2.
 
-	NVIC_SetVectorTable
-	NVIC_PriorityGroupConfig
-	
-	SysTick_CLKSourceConfig
-
-HAL
-
-	HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
-	
-	
-治具复位按键：
-
-治具电池阀动作按键
+SPI  通讯速度--->1.25MHZ

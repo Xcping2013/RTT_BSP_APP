@@ -57,7 +57,7 @@ static rt_uint16_t out_flash_cnt[9]={0};
 static int timer_10ms_init(void);
 static void timeout1(void *parameter);
 
-void dido_gpio_init(void)
+void dido_hw_init(void)
 {    
 	uint8_t i;
 	for(i=0;i<12;i++)
@@ -286,7 +286,7 @@ int rgb(int argc, char **argv)
 //
 #endif
 
-//INIT_APP_EXPORT(dido_gpio_init);
+//INIT_APP_EXPORT(dido_hw_init);
 //MSH_CMD_EXPORT(readinput, read the state of the input channel);
 //MSH_CMD_EXPORT(output_on, set the output channel on);
 //MSH_CMD_EXPORT(output_off, set the output channel off);

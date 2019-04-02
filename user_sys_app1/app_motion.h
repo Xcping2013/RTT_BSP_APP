@@ -3,14 +3,14 @@
 
 #include "bsp_tmc429.h"
 
-void rt_hw_tmc429_init(void);
+void tmc429_hw_init(void);
 
 uint8_t TMCL_MotorRotate(void);
 void RotateRight(uint8_t axisNum , int speed);
 void RotateLeft(uint8_t axisNum , int speed);
 void MotorStop(uint8_t axisNum);
 
-int motion_thread_init(void);
+int MotorLimitCheck_thread_init(void);
 int motor(int argc, char **argv);
 
 

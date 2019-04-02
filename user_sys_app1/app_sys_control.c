@@ -1,5 +1,21 @@
 //#include "app_sys_control.h"
+/* 	C内置宏
+ANSI C标准中有几个标准预定义宏（也是常用的）：
 
+__DATE__：在源文件中插入当前的编译日期
+
+__TIME__：在源文件中插入当前编译时间；
+
+__FILE__：在源文件中插入当前源文件名；
+
+__LINE__：在源代码中插入当前源代码行号；
+
+__FUNCTION__:在源代码中插入当前所在函数名称；
+
+__STDC__：当要求程序严格遵循ANSI C标准时该标识被赋值为1；
+
+__cplusplus：当编写C++程序时该标识符被定义
+*/
 #include "bsp_include.h"	
 #include "app_include.h"
 
@@ -9,6 +25,12 @@ int motorPosition[3];
 uint8_t autoRESETmotor=FALSE;
 uint8_t TimerOpened=0;
 
+void LoadSettingViaProID(void)
+{
+	
+	
+}
+//
 uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
 {
 	while (BufferLength--)
@@ -76,13 +98,13 @@ void reboot(void)
 
 /*
 *********************************************************************************************************
-*	函 数 名: LoadParam
+*	函 数 名: LoadParamFromEeprom
 *	功能说明: 从Flash读参数到g_tParam
 *	形    参：无
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void LoadParam(void)
+void LoadParamFromEeprom(void)
 {
 	at24cxx.read(at24c256 , PARAM_ADDR, (uint8_t *)&g_tParam, sizeof(PARAM_T));
 	//ee_ReadBytes((uint8_t *)&g_tParam, PARAM_ADDR, sizeof(PARAM_T));
@@ -97,24 +119,24 @@ void LoadParam(void)
 		g_tParam.ParamVer   = PARAM_VER;
 		g_tParam.MasterBaudrate  = 115200;
 		g_tParam.SlaveBaudrate   = 115200;
-		g_tParam.Project_ID = COMMON;
+		g_tParam.Project_ID = OQC_FLEX;
 	
 #if defined(USING_INC_MBTMC429) 
 		
-		g_tParam.tmc429_VMax[0] = 839;
+		g_tParam.tmc429_VMax[0] = 140;
 		g_tParam.tmc429_AMax[0] = 1000;
 		g_tParam.tmc429_PulseDiv[0]=5;
 		g_tParam.tmc429_RampDiv[0]=8;
 		g_tParam.speed_home[0]=839;
 
-		g_tParam.tmc429_VMax[1] = 839;
+		g_tParam.tmc429_VMax[1] = 140;
 		g_tParam.tmc429_AMax[1] = 1000;
 		g_tParam.tmc429_PulseDiv[1]=5;
 		g_tParam.tmc429_RampDiv[1]=8;
 		g_tParam.speed_home[1]=839;
 
 
-		g_tParam.tmc429_VMax[2] = 839;
+		g_tParam.tmc429_VMax[2] = 140;
 		g_tParam.tmc429_AMax[2] = 1000;
 		g_tParam.tmc429_PulseDiv[2]=5;
 		g_tParam.tmc429_RampDiv[2]=8;
@@ -147,29 +169,29 @@ void LoadParam(void)
 
 
 
-		SaveParam();						
+		SaveParamToEeprom();						
 	}
 	
 	switch(g_tParam.Project_ID)
 	{
 		case OQC_FLEX: 
-			DEBUG_TRACE("fixture init ok --- type: OQC_FLEX\n");
+			DEBUG_TRACE("\ncontroller init ok --- type: OQC_FLEX\n");
 			break;
 		default:
-			DEBUG_TRACE("fixture init ok --- type: common user\n");
+			DEBUG_TRACE("\ncontroller init ok --- type: common user\n");
 		break;
 	}
 }
 
 /*
 *********************************************************************************************************
-*	函 数 名: SaveParam
+*	函 数 名: SaveParamToEeprom
 *	功能说明: 将全局变量g_tParam 写入到CPU内部Flash
 *	形    参: 无
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void SaveParam(void)
+void SaveParamToEeprom(void)
 {
 	at24cxx.write(at24c256,PARAM_ADDR,(uint8_t *)&g_tParam,sizeof(PARAM_T));
 	//(pageNum+55)*64
@@ -200,7 +222,7 @@ int ParamSave(int argc, char **argv)
 				rt_kprintf("Usage: \n");
 				rt_kprintf("ParamSave ProjectType button_online      -set controller fit to button online fixture\n");	
 				rt_kprintf("ParamSave ProjectType button_offline     -set controller fit to button offline fixture\n");		
-				rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to button road fixture\n");
+				rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to OQC-Flex fixture\n");
 				rt_kprintf("ParamSave ProjectType lidopen            -set controller fit to lidopen fixture\n");
 				result = REPLY_INVALID_CMD;
 			}
@@ -209,10 +231,13 @@ int ParamSave(int argc, char **argv)
 	}
 	if(result == RT_EOK ) 
 	{
-		SaveParam();	
-		CMD_TRACE("save parameter ok and will be load after restart\n");
+		SaveParamToEeprom();	
+		CMD_TRACE("save parameter ok and controller start to load setting......");
+		//reboot();
+		LoadSettingViaProID();
+		CMD_TRACE("ok\n");
 	}
-	else 
+	else if( result == RT_ERROR ) 
 	{
 		rt_kprintf("Usage: \n");
 		rt_kprintf("ParamSave MasterBaudrate <baudrate>      -set the controller baudrate\n");	
@@ -378,8 +403,6 @@ void TIM1_UP_IRQHandler(void)
 /*
 V-2000=2000/140=14.2mm/s   =0.14mm/10ms   840 0.05mm  20ms---0.01mm 使用软件定时器10ms也没问题 
 */
-static uint8_t chenckSensorDelay=0;
-
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	for(uint8_t i=0;i<N_O_MOTORS;i++)
@@ -389,7 +412,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}		
 }
 
-void timer_motorSensorCheck_init(void)
+void MotorSensorCheck_timer_init(void)
 {
 	MX_TIM1_Init();
 	//timer_start();

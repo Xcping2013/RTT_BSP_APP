@@ -20,7 +20,7 @@ static char uart_name[]="uart3";
 static char uart_rx_buff[200];
 static uint8_t uart_rx_len_index=0;
 static uint8_t FirstDataOut=0;
-static uint8_t motorSpeedCnt=0;
+static uint8_t AxisSpeedIsZeroCnt=0;
 static uint8_t serialOpened=0;
 
 void  openSerial(void)
@@ -39,7 +39,7 @@ void  closeSerial(void)
 	{
 		serialOpened=FALSE; 	
 		rt_device_close(serial);	
-		rt_kprintf("motor[2] is stop and stop printing data\n>>");
+//		rt_kprintf("motor[2] is stop and stop printing data\n>>");
 	}
 }
 
@@ -60,13 +60,17 @@ static void serial_thread_entry(void *parameter)
         }	
 				if(Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) ==0 )				//读取信息的时候如果被其他中断调用（比如一直UART1中断命令），则SPI读取值出问题
 				{
-					if(motorSpeedCnt++>3)
+					if(AxisSpeedIsZeroCnt++ > 20)
 					{
-						motorSpeedCnt=0;
+						AxisSpeedIsZeroCnt=0;
 						closeSerial();
+						rt_kprintf("motor[2] is stop and stop printing data\n>>");
 					}
+//					else if(0<AxisSpeedIsZeroCnt)
+//						rt_kprintf("IDX_VACTUAL=0\n>>");
 				}
-				else if(motorSpeedCnt!=0) motorSpeedCnt--;
+//				else if(AxisSpeedIsZeroCnt!=0) AxisSpeedIsZeroCnt--;
+				else AxisSpeedIsZeroCnt=0;
 				if(uart_rx_len_index < uart_rx_len_max)
         {
 					if(ch=='\r' || ch=='\n' )	
@@ -92,7 +96,7 @@ static void serial_thread_entry(void *parameter)
     }
 }
 //
-int uart_PressPos_thread_init(void)
+int uart_stream_thread_init(void)
 {
     rt_err_t ret = RT_EOK;
 		memset(uart_rx_buff, '\0', uart_rx_len_max);
@@ -127,6 +131,7 @@ int printdata(int argc, char **argv)
 		CMD_TRACE("Please input: printdata\n");
 		return RT_ERROR;
 	}	
+	AxisSpeedIsZeroCnt=0;
 	openSerial();
 	return 0;
 }

@@ -30,7 +30,7 @@ static void led_thread_entry(void *parameter)
     }
 }
 
-int led_thread_init(void)
+int SysRunLed_thread_init(void)
 {
     rt_err_t result;
 
@@ -51,7 +51,7 @@ int led_thread_init(void)
 }
 
 #else 
-int led_thread_init(void)
+int SysRunLed_thread_init(void)
 {
 	static uint32_t tickLEDstart;	
 	

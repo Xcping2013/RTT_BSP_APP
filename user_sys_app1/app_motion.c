@@ -101,7 +101,7 @@ static void RampInit(void)
 	}
 }
 
-void  rt_hw_tmc429_init(void)
+void  tmc429_hw_init(void)
 {
 	pinMode(POSCMP1_PIN, PIN_MODE_INPUT_PULLUP);
   pinMode(INTOUT1_PIN, PIN_MODE_INPUT_PULLUP);	
@@ -821,7 +821,7 @@ static void motion_thread_entry(void *parameter)
 			rt_thread_delay(10);
 		}		
 }
-int motion_thread_init(void)
+int MotorLimitCheck_thread_init(void)
 {
     rt_err_t result;
 

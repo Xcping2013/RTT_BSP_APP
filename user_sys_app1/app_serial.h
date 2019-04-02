@@ -3,7 +3,7 @@
 
 #include "bsp_defines.h"
 
-int uart_PressPos_thread_init(void);
+int uart_stream_thread_init(void);
 int printdata(int argc, char **argv);
 void  openSerial(void);
 void  closeSerial(void);

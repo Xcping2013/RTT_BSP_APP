@@ -71,7 +71,7 @@ pca9539a_t pca9539a_2=
 	0,
 };
 
-void dido_gpio_init(void)
+void dido_hw_init(void)
 {
 	dido_pca9539a_init();
 }

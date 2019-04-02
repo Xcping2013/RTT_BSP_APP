@@ -29,7 +29,7 @@
 #define N_O_MOTORS 				 		 3                          			//!< number of motors supported by this module
 	
 #define PARAM_ADDR		0			
-#define PARAM_VER			0x00000102					
+#define PARAM_VER			0x00000100				
 
 /* 全局参数 */
 typedef struct
@@ -132,8 +132,8 @@ void xstrcat(char *str1,char *str2);
 uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength);
 void reboot(void);
 	
-void LoadParam(void);
-void SaveParam(void);
+void LoadParamFromEeprom(void);
+void SaveParamToEeprom(void);
 
 extern int motorPosition[3];
 extern uint8_t autoRESETmotor;
@@ -141,12 +141,13 @@ extern uint8_t TimerOpened;
 
 int ParamSave(int argc, char **argv);
 
+void LoadSettingViaProID(void);
 
 void timer_start(void);
 void timer_stop(void);
 
 void MotorAutoReset_preset( void );
-void timer_motorSensorCheck_init(void);
+void MotorSensorCheck_timer_init(void);
 void SetAmaxAutoByspeed(u8 axisNum,int speed);
 void get_motor_position(void);
 
