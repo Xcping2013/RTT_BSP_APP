@@ -20,16 +20,17 @@ static char uart_name[]="uart3";
 static char uart_rx_buff[200];
 static uint8_t uart_rx_len_index=0;
 static uint8_t FirstDataOut=0;
-static uint8_t AxisSpeedIsZeroCnt=0;
+uint8_t AxisSpeedIsZeroCnt=0;
 static uint8_t serialOpened=0;
 
 void  openSerial(void)
 {
-	if(serialOpened==FALSE)	
+	if(serialOpened==FALSE && Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) !=0)	
 	{
 		serialOpened=TRUE; 
 		FirstDataOut=1;		
-		rt_device_open(serial, RT_DEVICE_FLAG_INT_RX);	
+		__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
+		//rt_device_open(serial, RT_DEVICE_FLAG_INT_RX);	
 	}
 }
 
@@ -38,7 +39,8 @@ void  closeSerial(void)
 	if(serialOpened==TRUE)	
 	{
 		serialOpened=FALSE; 	
-		rt_device_close(serial);	
+		__HAL_UART_DISABLE_IT(&huart3, UART_IT_RXNE);
+//		rt_device_close(serial);	
 //		rt_kprintf("motor[2] is stop and stop printing data\n>>");
 	}
 }
@@ -136,6 +138,61 @@ int printdata(int argc, char **argv)
 	return 0;
 }
 //
+void USART3_IRQHandler(void)
+{
+	rt_interrupt_enter();
+	int ch;
+	if ((__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_RXNE) != RESET))
+	{
+		if (__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE) != RESET)
+		{
+			
+#if defined(USING_STM32F0_HAL) 
+			ch = huart3.Instance->RDR & 0xff;
+#else
+			ch = huart3.Instance->DR & 0xff;
+#endif
 
+			//huart1.Instance->TDR = ch;
+
+			if(ch==0x0d) 
+			{
+				//USART_RX_STA|=0x8000; 
+				u8 len=USART_RX_STA&0x3fff;	
+				USART_RX_BUF[len]='\0';
+									
+				if(Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) ==0 )				//读取信息的时候如果被其他中断调用（比如一直UART1中断命令），则SPI读取值出问题
+				{
+						if(AxisSpeedIsZeroCnt++ > 1)
+						{
+							AxisSpeedIsZeroCnt=0;
+							closeSerial();
+							rt_kprintf("motor[2] is stop and stop printing data\n>>");
+						}
+				}
+				else 
+				{
+					AxisSpeedIsZeroCnt=0;
+					if(FirstDataOut<2)	FirstDataOut++;
+					else 
+					{
+						motorPosition[AXIS_Z]=Read429Int(IDX_XACTUAL|(AXIS_Z<<5));
+						rt_kprintf("P[2]=%d,Press%s\n",motorPosition[AXIS_Z],&USART_RX_BUF);			
+					}
+					USART_RX_STA=0; 
+					memset(USART_RX_BUF, '\0', USART_REC_LEN);
+				}
+			}
+			else
+			{
+				USART_RX_BUF[USART_RX_STA&0X3FFF]=ch;
+				USART_RX_STA++;
+				if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0; 
+			}		 
+		}
+    __HAL_UART_CLEAR_FLAG(&huart3, UART_FLAG_RXNE);
+  }
+	rt_interrupt_leave();
+}
 
 

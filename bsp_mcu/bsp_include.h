@@ -24,6 +24,7 @@
 
 #include "bsp_defines.h"
 
+
 #if defined(USING_RTT)
 
 	#include "mbtmc429_cube_usart.h"

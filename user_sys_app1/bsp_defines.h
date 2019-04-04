@@ -10,6 +10,9 @@
 
 #if defined(USING_STM32F1_HAL)
 #include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_gpio.h"
+#include "stm32f1xx_hal_uart.h"
+#include "stm32f1xx_hal_spi.h"
 #endif 
 
 #include <stdio.h>

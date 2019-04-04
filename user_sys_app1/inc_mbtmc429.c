@@ -39,11 +39,12 @@ int mbtmc429_hw_init(void)
 	MotorSensorCheck_timer_init();	
 	MotorLimitCheck_thread_init();
 
-	uart_stream_thread_init();	
+	MX_USART3_UART_Init();
+	//uart_stream_thread_init();	
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver1.02 build at %s %s\n\n", __TIME__, __DATE__);
+	rt_kprintf("\nfirmware ver1.03 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }

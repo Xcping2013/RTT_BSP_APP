@@ -135,6 +135,9 @@ void reboot(void);
 void LoadParamFromEeprom(void);
 void SaveParamToEeprom(void);
 
+
+extern uint8_t AxisSpeedIsZeroCnt;
+
 extern int motorPosition[3];
 extern uint8_t autoRESETmotor;
 extern uint8_t TimerOpened;

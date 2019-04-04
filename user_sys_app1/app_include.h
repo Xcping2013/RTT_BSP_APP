@@ -12,6 +12,7 @@
 #include "app_button.h"
 #include "app_eeprom_24xx.h"
 
+#include "app_uart.h"
 #include "app_serial.h"
 #include "app_motion.h"
 #include "app_motor_home.h"

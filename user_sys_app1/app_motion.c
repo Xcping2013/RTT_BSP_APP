@@ -818,7 +818,8 @@ static void motion_thread_entry(void *parameter)
 					cnt_delay=0;
 				}
 			}
-			rt_thread_delay(10);
+
+			rt_thread_delay(1);
 		}		
 }
 int MotorLimitCheck_thread_init(void)
