@@ -13,7 +13,7 @@
 
            ->  Additional Softwares
 
-           ->  Hard fault interrupt Pendable request Time base :System tick timer
+           ->  Hard fault interrupt £»Pendable request Time base £»System tick timer
 	Code not generation
 
 2. shell

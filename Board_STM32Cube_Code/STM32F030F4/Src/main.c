@@ -20,22 +20,25 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "adc.h"
 #include "iwdg.h"
 #include "rtc.h"
 #include "spi.h"
-#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "app_Commands.h"
+#include "app_bme280.h"
+#include "bsp_mcu_gpio.h"
+#include "app_uart.h"
+#include "app_commands.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define		PF1				3
+#define		PA13			19
+#define		PA14			20
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -93,18 +96,28 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC_Init();
   MX_IWDG_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
-  MX_TIM14_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+	Bme280InitViaSpi(&bme280_dev1);
+	HAL_Delay(20);
+	
+	__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 	tickLedstart=HAL_GetTick();
+	
+	rt_kprintf("control board init ok\r\nfirmware ver1.03 build at %s %s\r\n>>", __TIME__, __DATE__);
+	
+#if defined(USING_FREE_RTOS)	
+
+	HAL_UART_Receive_IT(&huart1, (u8 *)USART_RX_BUF, USART_REC_LEN);//该函数会开启接收中断：标志位UART_IT_RXNE，并且设置接收缓冲以及接收缓冲接收最大数据量
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+#endif
   while (1)
   {
     /* USER CODE END WHILE */
@@ -113,9 +126,11 @@ int main(void)
 		CommandCheckAndExe();
 		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
 		{
-			HAL_GPIO_TogglePin(LED_GPIO_Port,LED_Pin);
+			//HAL_GPIO_TogglePin(LED_SYS_RUN_GPIO_Port,LED_SYS_RUN_Pin);
+			pinToggle(PF1);
 			tickLedstart=HAL_GetTick();
 		}
+		msTaskNoneRTOS_bme280(200);
   }
   /* USER CODE END 3 */
 }
@@ -132,12 +147,9 @@ void SystemClock_Config(void)
 
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSI14
-                              |RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSI14State = RCC_HSI14_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.HSI14CalibrationValue = 16;
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
@@ -171,6 +183,27 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM1 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM1) {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
