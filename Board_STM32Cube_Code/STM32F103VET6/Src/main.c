@@ -30,6 +30,10 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 #include "app_Commands.h"
+
+#if defined(FLEX_SIMPLIFIED)
+  #include "appSimplifiedFlex.h"
+#endif
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,7 +81,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	uint32_t tickLedstart;
-	uint32_t tickBeepstart;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -111,7 +114,6 @@ int main(void)
 	HAL_Delay(50);
 	
 	tickLedstart=HAL_GetTick();
-	tickBeepstart=HAL_GetTick();
 
   /* USER CODE END 2 */
 
@@ -123,24 +125,17 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		CommandCheckAndExe();
+		
 		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
 		{
 			HAL_GPIO_TogglePin(LED_SYS_GPIO_Port,LED_SYS_Pin);
 			tickLedstart=HAL_GetTick();
 		}
-		if(abs((int)(HAL_GetTick()-tickBeepstart))>350)
-		{
-			if(beep_flash_on) 
-			{
-				HAL_GPIO_TogglePin(BEEP_GPIO_Port,BEEP_Pin);
-				tickBeepstart=HAL_GetTick();
-			}
-			else 
-			{
-				HAL_GPIO_WritePin(BEEP_GPIO_Port,BEEP_Pin, GPIO_PIN_RESET);
-			}
-		}
+		
+#if defined(FLEX_SIMPLIFIED)
 		FlexButtonTest_APP();
+#endif
+		
   }
 	
 

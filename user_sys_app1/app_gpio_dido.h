@@ -12,4 +12,6 @@ int beep(int argc, char **argv);
 uint8_t getChInput(uint8_t channel);
 void setChOutput(uint8_t channel, uint8_t setval);
 
+void InitIn8AsExti(void);
+
 #endif

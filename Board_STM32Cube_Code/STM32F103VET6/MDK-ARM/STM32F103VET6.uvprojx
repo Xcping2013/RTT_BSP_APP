@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\..\ST_HAL_Drivers;..\..\..\..\applications;..\..\ST_HAL_Drivers\syscontrol;..\..\ST_HAL_Drivers\command</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\..\..\bsp_mcu;..\..\..\uarts;..\..\..\flash_eeprom;..\..\..\motorcontrol;..\..\..\user_project;..\..\..\user_sys_app1</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -390,121 +390,6 @@
         <Group>
           <GroupName>Application/User</GroupName>
           <Files>
-            <File>
-              <FileName>app_mbtmc429.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\app_mbtmc429.c</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>1</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>2</v6Lto>
-                    <v6WtE>2</v6WtE>
-                    <v6Rtti>2</v6Rtti>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>drv_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\drv_usart.c</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>2</v6Lto>
-                    <v6WtE>2</v6WtE>
-                    <v6Rtti>2</v6Rtti>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>RT-Thread nano.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\..\RT-Thread nano.txt</FilePath>
-            </File>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
@@ -633,47 +518,142 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>User/hal</GroupName>
+          <GroupName>Doc</GroupName>
           <Files>
             <File>
-              <FileName>app_eeprom_24xx.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\app_eeprom_24xx.c</FilePath>
+              <FileName>RT-Thread nano.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\RT-Thread nano.txt</FilePath>
             </File>
             <File>
-              <FileName>bsp_eeprom_24xx.c</FileName>
+              <FileName>INC-MBTMC429_PinSet.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Doc\INC-MBTMC429_PinSet.txt</FilePath>
+            </File>
+            <File>
+              <FileName>INC-MBTMC429_readme.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Doc\INC-MBTMC429_readme.txt</FilePath>
+            </File>
+            <File>
+              <FileName>rtt_analyze.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Doc\rtt_analyze.txt</FilePath>
+            </File>
+            <File>
+              <FileName>st_readme.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Doc\st_readme.txt</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/commands</GroupName>
+          <Files>
+            <File>
+              <FileName>app_uart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\uarts\app_uart.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_uart1_Commands.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\uarts\app_uart1_Commands.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_uart1_console.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\uarts\app_uart1_console.h</FilePath>
+            </File>
+            <File>
+              <FileName>app_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\bsp_eeprom_24xx.c</FilePath>
+              <FilePath>..\..\..\uarts\app_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_uart1_Commands.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\uarts\app_uart1_Commands.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/mcu</GroupName>
+          <Files>
+            <File>
+              <FileName>bsp_include.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_include.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_delay.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_delay.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_exit.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_exit.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_gpio.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_gpio.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_softi2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_softi2c.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_spi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_spi.h</FilePath>
             </File>
             <File>
               <FileName>bsp_mcu_delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\bsp_mcu_delay.c</FilePath>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_mcu_exit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_exit.c</FilePath>
             </File>
             <File>
               <FileName>bsp_mcu_gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\bsp_mcu_gpio.c</FilePath>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_gpio.c</FilePath>
             </File>
             <File>
               <FileName>bsp_mcu_softi2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\bsp_mcu_softi2c.c</FilePath>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_softi2c.c</FilePath>
             </File>
             <File>
-              <FileName>app_sys_control.c</FileName>
+              <FileName>bsp_mcu_softspi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\ST_HAL_Drivers\syscontrol\app_sys_control.c</FilePath>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_softspi.c</FilePath>
             </File>
             <File>
-              <FileName>app_Commands.c</FileName>
+              <FileName>bsp_mcu_spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\ST_HAL_Drivers\command\app_Commands.c</FilePath>
+              <FilePath>..\..\..\bsp_mcu\bsp_mcu_spi.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Use/FlexButton_Simplified</GroupName>
+          <Files>
+            <File>
+              <FileName>appSimplifiedFlex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\user_project\appSimplifiedFlex.c</FilePath>
             </File>
             <File>
-              <FileName>app_serial.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\ST_HAL_Drivers\command\app_serial.c</FilePath>
+              <FileName>appSimplifiedFlex.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\user_project\appSimplifiedFlex.h</FilePath>
             </File>
           </Files>
         </Group>

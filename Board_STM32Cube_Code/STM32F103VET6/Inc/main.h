@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define IN8_Pin GPIO_PIN_2
 #define IN8_GPIO_Port GPIOE
+#define IN8_EXTI_IRQn EXTI2_IRQn
 #define IN9_Pin GPIO_PIN_3
 #define IN9_GPIO_Port GPIOE
 #define IN10_Pin GPIO_PIN_4

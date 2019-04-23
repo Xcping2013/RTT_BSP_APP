@@ -293,4 +293,45 @@ int rgb(int argc, char **argv)
 //MSH_CMD_EXPORT(output_flashing, start or stop output flashing);
 //MSH_CMD_EXPORT(rgb_pin_num, set the rgb_pin_num led);
 
+//
+void InitIn8AsExti(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	__HAL_RCC_GPIOE_CLK_ENABLE();
+	
+  GPIO_InitStruct.Pin = IN8_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(IN8_GPIO_Port, &GPIO_InitStruct);
+
+
+  /* Enable and set EXTI line 0 Interrupt to the lowest priority */
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+}
+//void EXTI2_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN EXTI2_IRQn 0 */
+//	rt_interrupt_enter();
+//  /* USER CODE END EXTI2_IRQn 0 */
+//  HAL_GPIO_EXTI_IRQHandler(IN8_Pin);
+//  /* USER CODE BEGIN EXTI2_IRQn 1 */
+//	rt_interrupt_leave();
+//  /* USER CODE END EXTI2_IRQn 1 */
+//}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if ( GPIO_Pin == IN8_Pin ) 
+  {
+		drv_mdelay(10);
+		if( HAL_GPIO_ReadPin(IN8_GPIO_Port,IN8_Pin)==PIN_HIGH	) 	
+		{			
+			HardStop(2);
+			closeSerial();
+			rt_kprintf("stop motor z due to pressure overhigh!!!\n");
+			rt_kprintf("motor[2] is stop and stop printing data\n>>");
+		}
+  }
+}
+
 

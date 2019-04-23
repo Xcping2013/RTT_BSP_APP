@@ -2,7 +2,7 @@
 #define __BSP_DEFINES_H_
 
 #define USING_STM32F1_HAL	
-#define USING_RTT	
+//#define USING_RTT	
 
 #if defined(USING_STM32F0_HAL)
 #include "stm32f0xx_hal.h"

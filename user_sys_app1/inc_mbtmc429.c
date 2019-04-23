@@ -32,6 +32,8 @@ int mbtmc429_hw_init(void)
 	SysRunLed_thread_init();
 	
 	dido_hw_init();
+	InitIn8AsExti();	//采集输入口IN8的过压报警信号并停止电机，可以继续采集IO状态来判断过压
+	
 	at24cxx_hw_init();
 	
 	tmc429_hw_init();
@@ -44,7 +46,7 @@ int mbtmc429_hw_init(void)
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver1.03 build at %s %s\n\n", __TIME__, __DATE__);
+	rt_kprintf("\nfirmware ver1.04 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }
