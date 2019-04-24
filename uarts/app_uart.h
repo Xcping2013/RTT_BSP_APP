@@ -5,8 +5,10 @@
  extern "C" {
 #endif
 
-#include "mbtmc429_cube_usart.h"
-#include "bsp_defines.h"
+//#include "mbtmc429_cube_usart.h"
+//#include "bsp_defines.h"
+	 
+#include "bsp_include.h"	 
 
 #define USART_REC_LEN  		200  	
 	  	

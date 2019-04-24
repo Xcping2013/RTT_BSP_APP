@@ -774,7 +774,7 @@ int motor(int argc, char **argv)
 	  return result;
 }
 
-//
+#if defined(USING_RTT)
 static rt_uint8_t motion_stack[ 512 ];
 static struct rt_thread motion_thread;
 static void motion_thread_entry(void *parameter);
@@ -841,4 +841,11 @@ int MotorLimitCheck_thread_init(void)
     }
     return 0;
 }
-
+#else
+int MotorLimitCheck_thread_init(void)
+{
+	
+	
+	
+}
+#endif

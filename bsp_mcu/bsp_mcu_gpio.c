@@ -6,8 +6,8 @@
 
 #ifndef	USING_RTT
 
-	//#define	STM32F10X_PIN_NUMBERS 100
-	#define USING_STM32F030F4	
+	#define	STM32F10X_PIN_NUMBERS 100
+	//#define USING_STM32F030F4	
 	
 	#define __STM32_PIN(index, gpio, gpio_index) (gpio | gpio_index)
 	#define __STM32_PIN_DEFAULT 0

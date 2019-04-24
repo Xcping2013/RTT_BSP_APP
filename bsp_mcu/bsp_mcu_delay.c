@@ -27,7 +27,7 @@ void drv_udelay(uint32_t us)
 //不能在关闭中断后调用
 void delay_us(int us)
 {
-	rt_uint32_t delta;
+	uint32_t delta;
 	/* 获得延时经过的tick数 */
 	us = us * (SysTick->LOAD/(1000000/RT_TICK_PER_SECOND));
 	/* 获得当前时间 */

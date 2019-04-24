@@ -2,7 +2,7 @@
 #ifndef __EXTI_H
 #define __EXTI_H
 
-#include "mcu_gpio.h"
+#include "bsp_mcu_gpio.h"
 
 typedef struct 
 {

@@ -33,6 +33,13 @@
 	#include "mbtmc429_cube_tim.h"
 	#include "mbtmc429_cube_spi.h"
 
+#else
+	#include "usart.h"
+	#include "main.h"
+	#include "gpio.h"
+	#include "tim.h"
+	#include "spi.h"
+	
 #endif
 
 #include "bsp_mcu_delay.h"

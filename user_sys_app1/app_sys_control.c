@@ -390,11 +390,15 @@ void MotorAutoReset_preset( void )
 void TIM1_UP_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM1_UP_IRQn 0 */
+	#if defined(USING_RTT)
 	rt_interrupt_enter();	
+	#endif
   /* USER CODE END TIM1_UP_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
   /* USER CODE BEGIN TIM1_UP_IRQn 1 */
+	#if defined(USING_RTT)
 	rt_interrupt_leave();
+	#endif
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
 //10ms

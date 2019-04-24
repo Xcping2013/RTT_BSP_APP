@@ -207,7 +207,29 @@ typedef U8_T								B_T;
 	#include <rthw.h>
 	#include <board.h>
 	#include <drivers/pin.h>
+#else
+	#define rt_kprintf    printf
+	#define rt_uint8_t    uint8_t
+	#define rt_uint16_t   uint16_t
+	#define rt_uint32_t   uint32_t
+	#define	RT_NULL				NULL
+
+	#define RT_EOK                          0               /**< There is no error */
+	#define RT_ERROR                        1               /**< A generic error happens */
+	#define RT_ETIMEOUT                     2               /**< Timed out */
+	#define RT_EFULL                        3               /**< The resource is full */
+	#define RT_EEMPTY                       4               /**< The resource is empty */
+	#define RT_ENOMEM                       5               /**< No memory */
+	#define RT_ENOSYS                       6               /**< No system */
+	#define RT_EBUSY                        7               /**< Busy */
+	#define RT_EIO                          8               /**< IO error */
+	#define RT_EINTR                        9               /**< Interrupted system call */
+	#define RT_EINVAL                       10  
+	#define	rt_hw_cpu_reset() SCB_AIRCR = SCB_RESET_VALUE
+	typedef long					rt_err_t;
 	
+	#define SCB_AIRCR       	(*(volatile unsigned long *)0xE000ED0C)  /* Reset control Address Register */
+	#define SCB_RESET_VALUE 	0x05FA0004     
 #endif
 
 

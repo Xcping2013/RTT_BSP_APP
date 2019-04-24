@@ -54,8 +54,12 @@ int SysRunLed_thread_init(void)
 int SysRunLed_thread_init(void)
 {
 	static uint32_t tickLEDstart;	
-	
-	tickLEDstart=HAL_GetTick();
+	static uint8_t Ledinited=0;	
+	if(Ledinited==0) 
+	{
+		tickLEDstart=HAL_GetTick();
+		Ledinited=1;
+	}
 	
 	if(abs((int)(HAL_GetTick()-tickLEDstart))>350)
 	{

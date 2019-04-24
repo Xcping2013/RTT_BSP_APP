@@ -32,7 +32,8 @@ int mbtmc429_hw_init(void)
 	SysRunLed_thread_init();
 	
 	dido_hw_init();
-	InitIn8AsExti();	//采集输入口IN8的过压报警信号并停止电机，可以继续采集IO状态来判断过压
+	
+	//InitIn8AsExti();	//采集输入口IN8的过压报警信号并停止电机，可以继续采集IO状态来判断过压
 	
 	at24cxx_hw_init();
 	

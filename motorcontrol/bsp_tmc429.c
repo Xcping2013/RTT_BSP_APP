@@ -33,8 +33,9 @@ FEATURES AND BENEFITS
   This file provides all functions needed for easy
   access to the TMC429 motion control IC.
 */
-#include "mbtmc429_cube_spi.h"
-#include "bsp_tmc429.h"
+//#include "mbtmc429_cube_spi.h"
+//#include "bsp_tmc429.h"
+#include "bsp_include.h"
 #include "app_sys_control.h"
 
 //usteps=8; //200*8=1600	3R/S 	如果是Y轴2mm 1圈的话 V=70=30mm/min	 0.25R/S	3/0.25=12	839/12=70

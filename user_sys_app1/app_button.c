@@ -56,7 +56,7 @@ int buttonSTART(int argc, char **argv)
 		if (!strcmp(argv[1], "enable")) 
 		{
 			buttonSTARTpressed=FALSE;
-			CMD_TRACE("enable button START for next test\n",buttonSTARTpressed);		
+			CMD_TRACE("enable button START for next test\n");		
 		}
 	}
 	return 0;

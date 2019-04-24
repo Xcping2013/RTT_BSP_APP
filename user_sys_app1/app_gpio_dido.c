@@ -48,7 +48,7 @@ uint8_t	outputs_pin_num[OUTPUT_COUNT]=
 uint8_t rgb_pin_num[3]={PD_6,PD_5,PD_4};
 uint8_t homeSensorPin[3]={PB_9,PE_0,PE_1};
 
-#if defined(USING_INC_MBTMC429) 
+#if defined(USING_INC_MBTMC429)  && defined(USING_RTT)
 
 static rt_timer_t timer1;
 static rt_uint8_t out_flash_on[9]={0};
@@ -300,7 +300,7 @@ void InitIn8AsExti(void)
 	__HAL_RCC_GPIOE_CLK_ENABLE();
 	
   GPIO_InitStruct.Pin = IN8_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(IN8_GPIO_Port, &GPIO_InitStruct);
 
@@ -324,7 +324,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   if ( GPIO_Pin == IN8_Pin ) 
   {
 		drv_mdelay(10);
-		if( HAL_GPIO_ReadPin(IN8_GPIO_Port,IN8_Pin)==PIN_HIGH	) 	
+		if( HAL_GPIO_ReadPin(IN8_GPIO_Port,IN8_Pin)==PIN_LOW	) 	
 		{			
 			HardStop(2);
 			closeSerial();
