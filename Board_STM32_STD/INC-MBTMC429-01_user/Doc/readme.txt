@@ -1,8 +1,25 @@
+项目相关：
+
+FW3.4	20190516 ADD X AXIS, X轴回原点动作;压力超标2轴都停止;需注意X轴的传感器使用的是自带的还是外置的！
+
+FW3.3
+
+button offline:无气缸;三轴;复位和开始按键动作封装
+button online:有气缸;三轴;复位和开始按键动作封装
+button ver3:东聚button;三轴;复位和开始按键动作封装，轴回原点动作顺序改变
+
+lidopen： 无原点单轴
+
+JABIL_LCR：无轴
+
+flex button simple：HAL 只进行气缸与指示灯动作
+flex button ver:使用的RTT，只使用Z轴，板子自动采集压力值
+
+road button ver1:只使用一个Z轴,中断采集过压信号,复位自动回原点，开始按键与其他button一样
+
 20190418: 速度、加速度;外部过压中断;SPI;SetUpAfterHomed;
 
-把STD3.5库版本也移植到BSP APPP下进行管理，新增分支管理  不同分支，相同文件名，不一样的文件内容---配置代码
-
-代码hex传输，需要思勇更新至网盘，后期关于其他项目电机未到位或者修改情况需要售后重新新代码
+ver3.3 优化电机停止命令为hardstop;
 
 communication code : buffer, handshake, done words words words！！！
 
@@ -47,5 +64,4 @@ IN OUT LED引脚改变	;	SPI1_CS IIC 引脚改变
 
 EEPROM	AT24C128--->256
 
-LCR Contro
 

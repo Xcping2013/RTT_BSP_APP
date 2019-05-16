@@ -51,8 +51,8 @@
 #define RM_HOLD 3
 
 #define NO_REF 	 0x03
-#define SOFT_REF 0x00 //硬件限位
-//#define SOFT_REF 0x04	//0x04 //软件限位
+#define HARD_REF 0x00 //硬件限位
+#define SOFT_REF 0x04	//软件限位
 
 #define NO_LIMIT 0
 #define HARD_LIMIT 1

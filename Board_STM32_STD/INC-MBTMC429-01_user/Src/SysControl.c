@@ -139,7 +139,9 @@ void MotorHoming_WithHomeSensor(void)
 		switch(Homing_step)
 		{
 				case X_GoHome:	
-					if( (Read429Short(IDX_VACTUAL|(0<<5)))<0  && X_HomeSensor==1)	//X÷·œ»À≥ ±’ÎœÚ◊Û—∞’“◊ÛœﬁŒª£¨µΩŒª∫ÛƒÊ ±’ÎœÚ”“‘À––÷–≤…ºØµΩ‘≠µ„–≈∫≈		
+					if( (Read429Short(IDX_VACTUAL|(0<<5)))<0  && X_HomeSensor==1)	//X÷·œ»À≥ ±’ÎœÚ◊Û—∞’“◊ÛœﬁŒª£¨µΩŒª∫ÛƒÊ ±’ÎœÚ”“‘À––÷–≤…ºØµΩ‘≠µ„–≈∫
+					//ROAD Z AIXS ; ADD X AXIS  20190516
+					//if(((Read429Short(IDX_VACTUAL|(0<<5)))<0 ) && ((ProID==BUTTON_ROAD && X_HomeSensor==0) || (ProID!=BUTTON_ROAD && X_HomeSensor==1)) )						
 					{
 						SetUpAfterHomed(AXIS_X);	Homing_step=GoHome_OK;					//X÷·ªÿ‘≠µ„OK
 						UART_Printf("Axis X Homed<OK>\n>>");	
@@ -205,10 +207,10 @@ void MotorHoming_WithHomeSensor(void)
 							delay_ms(500);OUTPUT3=0;OUTPUT4=1;
 							RotateLeft(AXIS_Y,Homing_speed[AXIS_Y]);	Homing_step=Y_GoHome;	break ;
 						}
-						else if(ProID==BUTTON_ROAD)
-						{
-							Homing_step=GoHome_OK;	break ;
-						}
+//						else if(ProID==BUTTON_ROAD)					//ROAD Z AIXS ; ADD X AXIS  20190516
+//						{
+//							Homing_step=GoHome_OK;	break ;
+//						}
 						else {Homing_step=X_GoHome;	 RotateRight(AXIS_X,Homing_speed[AXIS_X]);break;}			//X÷·œ»◊Û∫Û”“		
 					}
 					if((SwitchStatus& (0x02<<AXIS_Z*2)) ? 1:0	)		//L3

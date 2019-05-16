@@ -450,9 +450,9 @@ void Init429(void)
   Write429Datagram(IDX_PULSEDIV_RAMPDIV|MOTOR0, 0x00, (MotorConfig[0].PulseDiv<<4)|(MotorConfig[0].RampDiv & 0x0f), 0x04);
   Write429Datagram(IDX_PULSEDIV_RAMPDIV|MOTOR1, 0x00, (MotorConfig[1].PulseDiv<<4)|(MotorConfig[1].RampDiv & 0x0f), 0x04);
   Write429Datagram(IDX_PULSEDIV_RAMPDIV|MOTOR2, 0x00, (MotorConfig[2].PulseDiv<<4)|(MotorConfig[2].RampDiv & 0x0f), 0x04);
-  Write429Datagram(IDX_REFCONF_RM|MOTOR0, 0x00, SOFT_REF, 0x00);
-  Write429Datagram(IDX_REFCONF_RM|MOTOR1, 0x00, SOFT_REF, 0x00);
-  Write429Datagram(IDX_REFCONF_RM|MOTOR2, 0x00, SOFT_REF, 0x00);
+  Write429Datagram(IDX_REFCONF_RM|MOTOR0, 0x00, HARD_REF, 0x00);
+  Write429Datagram(IDX_REFCONF_RM|MOTOR1, 0x00, HARD_REF, 0x00);
+  Write429Datagram(IDX_REFCONF_RM|MOTOR2, 0x00, HARD_REF, 0x00);
   Write429Short(IDX_VMIN|MOTOR0, 1);
   Write429Short(IDX_VMIN|MOTOR1, 1);
   Write429Short(IDX_VMIN|MOTOR2, 1);

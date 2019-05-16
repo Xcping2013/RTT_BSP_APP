@@ -370,8 +370,9 @@ uint8_t  CommmandLine_move(char *Commands)
 		ActualMotor=Commands[0]-'0';
 		if(ActualMotor<N_O_MOTORS)
 		{
-			Set429RampMode(ActualMotor, RM_VELOCITY);
-			Write429Zero(IDX_VTARGET|(ActualMotor<<5));			
+			HardStop(ActualMotor);
+//			Set429RampMode(ActualMotor, RM_VELOCITY);
+//			Write429Zero(IDX_VTARGET|(ActualMotor<<5));			
 			UART_Printf("STOP[%d]<OK>\r\n",ActualMotor);			
 			return 1;
 		}

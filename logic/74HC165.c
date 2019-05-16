@@ -1,5 +1,5 @@
 
-#include "bsp.h"
+#include "bsp_include.h"
 
 #define HC165_DATA PC_5
 #define HC165_CLK  PA_1
@@ -9,9 +9,9 @@
 static void hc165_init(void)
 {
 	rt_pin_mode(HC165_DATA ,	 PIN_MODE_INPUT_PULLUP);
-	rt_pin_mode(HC165_CLK ,	 	 PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(HC165_LOAD ,   PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(HC165_SCK , 	 PIN_MODE_OUTPUT_PP);
+	rt_pin_mode(HC165_CLK ,	 	 PIN_MODE_OUTPUT);
+	rt_pin_mode(HC165_LOAD ,   PIN_MODE_OUTPUT);
+	rt_pin_mode(HC165_SCK , 	 PIN_MODE_OUTPUT);
 	
 	rt_pin_write(HC165_SCK , 	PIN_HIGH);
 	rt_pin_write(HC165_LOAD , PIN_HIGH);

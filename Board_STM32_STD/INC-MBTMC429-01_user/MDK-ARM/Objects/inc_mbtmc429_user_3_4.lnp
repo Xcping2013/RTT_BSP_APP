@@ -34,7 +34,7 @@
 ".\objects\startup_stm32f10x_hd.o"
 ".\objects\stm32f10x_spi.o"
 ".\objects\stm32f10x_exti.o"
---strict --scatter ".\Objects\road3.sct"
+--strict --scatter ".\Objects\inc_mbtmc429_user_3_4.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
---list ".\road3.map" -o .\Objects\road3.1
+--list ".\inc_mbtmc429_user_3_4.map" -o .\Objects\inc_mbtmc429_user_3_4.axf

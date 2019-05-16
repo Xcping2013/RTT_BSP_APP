@@ -29,8 +29,9 @@
 	 
 /* USER CODE BEGIN Includes */
 #include "bsp_defines.h"
-/* USER CODE END Includes */
 #include "inc_mb1616dev6.h"
+/* USER CODE END Includes */
+
 	 
 extern SPI_HandleTypeDef hspi1;
 extern SPI_HandleTypeDef hspi2;

@@ -265,7 +265,7 @@ void Debug_In_Out(void)
 	}
 	
 }
-//PE2
+//PE2 input8
 void InitIn8AsExti(void)
 {
 	EXTI_InitTypeDef EXTI_InitStructure;
@@ -292,7 +292,7 @@ void pressureAlarm_Handler(void)
 {
 	if(INPUT8==0 &&  pressureAlarm==0)	 	
 	{			
-		HardStop(2);
+		HardStop(2);HardStop(0);
 		KEY_RESET_pressed=0;	KEY_RESET_LED=0;	KEY_START_pressed=0;	KEY_START_LED=0;
 		MotorIsHomed=0;
 		Homing_step=NO_ACTION;
@@ -308,7 +308,7 @@ void EXTI2_IRQHandler(void)
 	//delay_ms(10);		//消抖 电机停止动作需要立即处理不能加延时！！！
 	if(INPUT8==0 && KEY_RESET_pressed==0 )	 	
 	{			
-		HardStop(2);
+		HardStop(2);HardStop(0);
 		KEY_RESET_pressed=0;	KEY_RESET_LED=0;	KEY_START_pressed=0;	KEY_START_LED=0;
 		MotorIsHomed=0;pressureAlarm=1;printStr5times=5;
 		Homing_step=NO_ACTION;

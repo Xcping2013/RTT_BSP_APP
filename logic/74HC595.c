@@ -8,9 +8,9 @@ uint8_t 	hc595_out[2]={0xff,0};
 
 void hc595_init(void)
 {
-	rt_pin_mode(HC595_DATA, PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(HC595_CLK, PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(HC595_LCK, PIN_MODE_OUTPUT_PP);
+	rt_pin_mode(HC595_DATA, PIN_MODE_OUTPUT);
+	rt_pin_mode(HC595_CLK, PIN_MODE_OUTPUT);
+	rt_pin_mode(HC595_LCK, PIN_MODE_OUTPUT);
 	
 	rt_pin_write(HC595_DATA, PIN_HIGH);
 	rt_pin_write(HC595_CLK, PIN_HIGH);
@@ -39,14 +39,14 @@ void hc595_updata(void)
 
 static void output_init(void)
 {
-	rt_pin_mode(PB_11,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PB_10,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_13,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_14,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_15,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_0,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_1,PIN_MODE_OUTPUT_PP);
-	rt_pin_mode(PC_2,PIN_MODE_OUTPUT_PP);
+	rt_pin_mode(PB_11,PIN_MODE_OUTPUT);
+	rt_pin_mode(PB_10,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_13,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_14,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_15,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_0,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_1,PIN_MODE_OUTPUT);
+	rt_pin_mode(PC_2,PIN_MODE_OUTPUT);
 	
 	hc595_init();
 	hc595_write(&hc595_out[0],2,MSB_FIRST);

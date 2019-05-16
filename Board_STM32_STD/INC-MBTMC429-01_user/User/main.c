@@ -41,30 +41,29 @@ int main(void)
   EnableInterrupts();
   InitSysTick();
 
-  InitPinAsGPIO();
-  AT24CXX_Init();	
+  InitPinAsGPIO();														//int	out	led
+  AT24CXX_Init();															//iic gpio
 
-  TIM3_PWM_Init(5,0);	 								//PWM=72/6=12M for clock output   TMC429时钟源
-  TIM_SetCompare3(TIM3,2);						//占空比
-	//set baud 
-  if(DefaultSettingsToEEPROM())	baud=AT24CXX_ReadLenByte(ADDR_BT,4);else baud=115200;
-  InitUART(baud);
+  TIM3_PWM_Init(5,0);	 												//PWM=72/6=12M for clock output   
+  TIM_SetCompare3(TIM3,2);										//TMC429_CLK=12MHZ p=50%
 	
-	//get project id and set param for it
-	ProID=AT24CXX_ReadOneByte(ADDR_PROJECT_ID);
-	//switch(AT24CXX_ReadOneByte(ADDR_PROJECT_ID))
+  if(DefaultSettingsToEEPROM())	baud=AT24CXX_ReadLenByte(ADDR_BT,4);else baud=115200;
+  InitUART(baud);															//set uart1 with defined baudrate
+	
+	
+	ProID=AT24CXX_ReadOneByte(ADDR_PROJECT_ID);	//get project id and set param for it
+	
 	switch(ProID)
 	{
 		case BUTTON_ONLINE:		RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON ONLINE\n>>");	
 				break ;
 		case BUTTON_OFFLINE:	RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON OFFLINE\n>>");
 				break ;
-		case BUTTON_VER3:			RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON_VER3\n>>"); //EXTIX_Init();
+		case BUTTON_VER3:			RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON_VER3\n>>"); 
 				break ;
 		case BUTTON_ROAD:			RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON ROAD\n>>");		
 				
-				InitIn8AsExti();
-				
+													InitIn8AsExti();			
 				break ;
 		
 		case LIDOPEN:				  RampInit_Lidopen();	UART_SendStr(" Fixture Type=LIDOPEN\n>>");	
@@ -73,22 +72,22 @@ int main(void)
 				break ;
 		case BASIC_APP:														UART_SendStr(" Fixture Type=IAC LCR\n>>");
 				break ;
-//		default :						AT24CXX_WriteOneByte(ADDR_PROJECT_ID, LIDOPEN);
-//												RampInit_Lidopen();	UART_SendStr(" Fixture Type=LIDOPEN\n>>");	
-//				break;	
 		default :						  AT24CXX_WriteOneByte(ADDR_PROJECT_ID, BUTTON_OFFLINE);			
 												  RampInit_Button();	UART_SendStr(" Fixture Type=BUTTON OFFLINE\n>>");
 				break ;
 	}
-	//initial motor controller
-	InitSPI();
-  Init429();		
-	/*原点输入改为外部中断*/
-	delay_ms(200);															//等待其他外围设备上电初始化OK
+	
+	InitSPI();																	//init spi1 and cs1 pin
+  Init429();																	//initial motor controller
+	
+	delay_ms(200);															//wait for all peripheral init ok
+	
 	UART_SendStr("Fixture Init Ok\n>>");
-	UART_Printf("\nfirmware ver3.2 build at %s %s\n\n", __TIME__, __DATE__);
+	UART_Printf("\nfirmware ver3.4 build at %s %s\n\n", __TIME__, __DATE__);
+	
   BlinkDelay=GetSysTimer();
   task1Delay=GetSysTimer();
+	
   for(;;)
   {		
 		//board auto operate from hardware or respond cmd according to project
@@ -112,6 +111,7 @@ int main(void)
 		CommandCheckAndExe();
 
 		if (ProID==BUTTON_ROAD) releaseAlarmTask();
+		
   	if(abs((int)(GetSysTimer()-BlinkDelay))>350)
   	{
 			/*
