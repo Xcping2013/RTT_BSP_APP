@@ -22,11 +22,14 @@ static void led_thread_entry(void *parameter)
 
     while (1)
     {
-        pinWrite(LED_PIN, 0);
+        pinToggle(LED_PIN);
+			#if defined(USING_IN8_EXIT)	
+				if(pressureAlarm==1)
+				{
+					CMD_TRACE("stop motor z due to pressure overhigh!!!\r\n>>");
+				}
+			#endif
         rt_thread_delay(RT_TICK_PER_SECOND / 4); /* sleep 0.5 second and switch to other thread */
-
-        pinWrite(LED_PIN, 1);
-        rt_thread_delay(RT_TICK_PER_SECOND / 4);
     }
 }
 

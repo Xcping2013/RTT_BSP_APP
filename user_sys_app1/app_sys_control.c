@@ -25,6 +25,13 @@ int motorPosition[3];
 uint8_t autoRESETmotor=FALSE;
 uint8_t TimerOpened=0;
 
+//对于限位安全要求高的项目：HARD_REF + 原点 HardStop  其他使用RampStop
+void RampStop(UINT Motor)
+{
+  Set429RampMode(MOTOR_NUMBER(Motor), RM_VELOCITY);
+  Write429Zero((MOTOR_NUMBER(Motor)<<5)|IDX_VTARGET);
+}
+
 void LoadSettingViaProID(void)
 {
 	
@@ -177,6 +184,9 @@ void LoadParamFromEeprom(void)
 		case OQC_FLEX: 
 			DEBUG_TRACE("\ncontroller init ok --- type: OQC_FLEX\n");
 			break;
+		case BUTTON_ROAD: 
+			DEBUG_TRACE("\ncontroller init ok --- type: BUTTON_ROAD\n");
+			break;
 		default:
 			DEBUG_TRACE("\ncontroller init ok --- type: common user\n");
 		break;
@@ -217,11 +227,15 @@ int ParamSave(int argc, char **argv)
 			else if (!strcmp(argv[2], "button_offline")) 	g_tParam.Project_ID  = BUTTON_OFFLINE;	
 			else if (!strcmp(argv[2], "OQC-Flex")) 		    g_tParam.Project_ID  = OQC_FLEX;	
 			else if (!strcmp(argv[2], "lidopen")) 				g_tParam.Project_ID  = LIDOPEN;	
+			else if (!strcmp(argv[2], "button_road")) 				g_tParam.Project_ID  = BUTTON_ROAD;	
 			else 
 			{
 				rt_kprintf("Usage: \n");
 				rt_kprintf("ParamSave ProjectType button_online      -set controller fit to button online fixture\n");	
-				rt_kprintf("ParamSave ProjectType button_offline     -set controller fit to button offline fixture\n");		
+				rt_kprintf("ParamSave ProjectType button_offline     -set controller fit to button offline fixture\n");	
+				
+				rt_kprintf("ParamSave ProjectType button_road        -set controller fit to button road fixture\n");
+				
 				rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to OQC-Flex fixture\n");
 				rt_kprintf("ParamSave ProjectType lidopen            -set controller fit to lidopen fixture\n");
 				result = REPLY_INVALID_CMD;
@@ -339,6 +353,8 @@ ROAD			 ：Z轴先上后下
 */
 void MotorAutoReset_preset( void )
 {	
+	pressureAlarm=0;
+	
 	timer_stop();	
 	autoRESETmotor=TRUE;
 	//设置回原点速度模式下的最大速度和加速度
@@ -369,6 +385,7 @@ void MotorAutoReset_preset( void )
 				break;
 				 
 		case OQC_FLEX:
+    case BUTTON_ROAD:
 			
 				 ActualCommand.Motor=AXIS_Z;
 				 homeInfo.GoHome[ActualCommand.Motor]=TRUE;

@@ -31,24 +31,26 @@ int mbtmc429_hw_init(void)
 {		
 	SysRunLed_thread_init();
 	
-	dido_hw_init();
+	dido_hw_init();					//add in8 as exit
 	at24cxx_hw_init();
 	
 	tmc429_hw_init();
 	
 	MotorSensorCheck_timer_init();	
-	MotorLimitCheck_thread_init();
+	//MotorLimitCheck_thread_init();
 
 	MX_USART3_UART_Init();
 	//uart_stream_thread_init();	
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver1.03 build at %s %s\n\n", __TIME__, __DATE__);
+	rt_kprintf("\nfirmware ver2.0 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }
-
+/*
+ver1.04---中断采集过压报警信号;立即停止电机;循环发送报警字符串
+*/
 INIT_APP_EXPORT(mbtmc429_hw_init);
 
 MSH_CMD_EXPORT(readinput, read the state of the input channel);

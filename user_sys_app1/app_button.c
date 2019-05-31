@@ -3,9 +3,12 @@
 #include "bsp_include.h"	
 #include "app_include.h"
 
-uint8_t buttonSTARTpressed=0;
-uint8_t buttonRESETpressed=0;
 
+uint8_t buttonSTARTpressed=FALSE;
+uint8_t buttonRESETpressed=FALSE;
+
+uint8_t buttonSTARTCNT=0;
+uint8_t buttonRESETCNT=0;
 //开始按键和复位按键由上位机控制，底层不封装任何特殊动作
 
 //启动按键可以和启动灯、复位灯一起搭配  	//开始按键自锁 复位按键解锁	
@@ -15,15 +18,20 @@ void buttonSTART_process(uint8_t inCh, uint8_t outCh)
 	{
 		if( getChInput(inCh)==IN_ON && buttonSTARTpressed==FALSE )					
 		{
-			delay_ms(20);		
-			if( getChInput(inCh)==IN_ON )											 																//开始按键
+			buttonSTARTCNT++;
+			//delay_ms(20);		
+			if( buttonSTARTCNT==2)											 																//开始按键
 			{
-				 setChOutput(outCh,1);	 									
-				 while(getChInput(inCh)==IN_ON) {;} 																						//等待松开									 									 			
+				 setChOutput(outCh,1);	setChOutput(2,0);	
+				 //while(getChInput(inCh)==IN_ON) {;} 																						//等待松开									 									 			
 				 buttonSTARTpressed=TRUE;  
 				 buttonRESETpressed=FALSE;			
 				 CMD_TRACE("buttonSTART=1\n");
 			}
+		}
+		else if( getChInput(inCh)==IN_OFF)
+		{
+			buttonSTARTCNT=0;	
 		}
 	}
 }
@@ -39,12 +47,18 @@ void buttonRESET_process(uint8_t inCh, uint8_t outCh)
 {
 	if( getChInput(inCh)==IN_ON && buttonRESETpressed==FALSE )							
 	{
-		delay_ms(20);
-		if( getChInput(inCh)==IN_ON )																				
+		//delay_ms(20);
+		buttonRESETCNT++;
+		//if( getChInput(inCh)==IN_ON )				
+		if( buttonRESETCNT==2)			
 		{		
-			buttonRESETpressed=TRUE;	setChOutput(outCh,1);	 
+			buttonRESETpressed=TRUE;	setChOutput(outCh,1);	 setChOutput(1,0);	
 			MotorAutoReset_preset();	
 		}
+	}
+	else if( getChInput(inCh)==IN_OFF)
+	{
+		buttonRESETCNT=0;	
 	}
 }
 
@@ -56,9 +70,18 @@ int buttonSTART(int argc, char **argv)
 		if (!strcmp(argv[1], "enable")) 
 		{
 			buttonSTARTpressed=FALSE;
+			setChOutput(1,0);	
 			CMD_TRACE("enable button START for next test\n",buttonSTARTpressed);		
 		}
+	}
+	else
+	{
+		rt_kprintf("Usage: \n");
+		//用户接口
+		rt_kprintf("buttonSTART status          -button START is pressed or not\n");
+		rt_kprintf("buttonSTART enable          -enable button START for next test\n");
 	}
 	return 0;
 }
 	
+MSH_CMD_EXPORT(buttonSTART, status and enable );

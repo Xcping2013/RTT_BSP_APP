@@ -10,7 +10,8 @@
 /* USER CODE BEGIN Includes */
 #include "bsp_defines.h"
 /* USER CODE END Includes */
-
+#define USING_IN8_EXIT
+	 
 /* USER CODE BEGIN Private defines */
 #define	CMD_RESPONSE_EN	1
 #ifdef	CMD_RESPONSE_EN
@@ -120,7 +121,10 @@ enum ProjectId
 	BUTTON_ONLINE, 
 	BUTTON_OFFLINE,	
 	BUTTON_VER3,
+	
+	BUTTON_ROAD,
 	OQC_FLEX,
+
 	LIDOPEN
 };
 
@@ -135,6 +139,7 @@ void reboot(void);
 void LoadParamFromEeprom(void);
 void SaveParamToEeprom(void);
 
+extern uint8_t pressureAlarm;
 
 extern uint8_t AxisSpeedIsZeroCnt;
 
@@ -153,6 +158,8 @@ void MotorAutoReset_preset( void );
 void MotorSensorCheck_timer_init(void);
 void SetAmaxAutoByspeed(u8 axisNum,int speed);
 void get_motor_position(void);
+
+void RampStop(UINT Motor);
 
 /* USER CODE END Prototypes */
 

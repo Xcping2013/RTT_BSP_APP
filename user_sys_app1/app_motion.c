@@ -39,6 +39,7 @@ position_reached,
 ref_SwStatus,				//=leftLimit_SwS
 rightLimit_SwS,
 leftLimit_SwS,
+allLimit_SwS,
 rightLimit_disable,	
 leftLimit_disable,
 
@@ -58,6 +59,7 @@ limitSignal,
 home_SenS,
 is_homed,
 is_stop,
+is_reach,
 is_reset,
 
 Type_none,
@@ -80,6 +82,8 @@ static void TMCL_GetAxisParameter(void);
 static void TMCL_SetAxisParameter(void);
 static void MotorLimitProcess(uint8_t axisNum);
 
+static void printf_cmd_motor_set(void);
+static void printf_cmd_motor_get(void);
 
 static void RampInit(void)
 {
@@ -309,8 +313,10 @@ static void TMCL_GetAxisParameter(void)
         break;
 
       case position_reached:
-        if(Read429Status() & 0x01) ActualReply.Value.Byte[0]=1;
-				CMD_TRACE("motor[%d] position reached=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+//        if(Read429Status() & 0x01) ActualReply.Value.Byte[0]=1;
+//				CMD_TRACE("motor[%d] position reached=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+			
+				CMD_TRACE("motor[%d] position reached=%d\n",ActualCommand.Motor,(Read429Status() & (0x01<<ActualCommand.Motor*2)) ? 1:0);
         break;
 
       case leftLimit_SwS:
@@ -321,6 +327,19 @@ static void TMCL_GetAxisParameter(void)
       case rightLimit_SwS:
         ActualReply.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x01<<ActualCommand.Motor*2)) ? 1:0;
 			  CMD_TRACE("motor[%d] right limit switch status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        break;
+			
+      case allLimit_SwS:
+				{
+						uint8_t limit_char[6];
+						uint8_t i;
+						uint8_t limit = Read429SingleByte(IDX_REF_SWITCHES, 3);
+						for(i=0;i<6;i++)
+						{
+							limit_char[i]=(limit&(0x20>>i)) ? '1':'0';
+						}
+						CMD_TRACE("motor limit switch status L2R2L1R1L0R0=%.6s\n",limit_char);
+				}
         break;
 
       case rightLimit_disable:
@@ -368,6 +387,11 @@ static void TMCL_GetAxisParameter(void)
 				break;
 			case is_stop:
 				CMD_TRACE("motor[%d] stop=%d\n",ActualCommand.Motor,Read429Short(IDX_VACTUAL|(ActualCommand.Motor<<5))? 0:1) ;
+				break;
+			case is_reach:
+
+				CMD_TRACE("motor[%d] reach=%d\n",ActualCommand.Motor,(Read429Status() & (0x01<<ActualCommand.Motor*2)) ? 1:0);
+
 				break;
 			case home_SenS:
 				CMD_TRACE("motor[%d] homeSensor=%d\n",ActualCommand.Motor, rt_pin_read(homeSensorPin[ActualCommand.Motor]) ? 0:1) ;
@@ -557,12 +581,19 @@ int motor(int argc, char **argv)
 				MotorAutoReset_preset();
 				return RT_EOK	; 
 			}
-      else
+			else	if (!strcmp(argv[1], "set"))
 			{
-				rt_kprintf("Usage: \n");
-				rt_kprintf("motor reset            -motor reset\n");		
-				rt_kprintf("motor reset?           -is axis reset or not\n");					
-				result =REPLY_INVALID_CMD;
+				printf_cmd_motor_set();
+				return RT_EOK	; 
+			}
+			else	if (!strcmp(argv[1], "get"))
+			{
+				printf_cmd_motor_get();
+				return RT_EOK	; 
+			}
+      else
+			{		
+				result =RT_ERROR;//REPLY_INVALID_CMD;
 			}     
 		}
 		if (argc == 3)
@@ -591,24 +622,36 @@ int motor(int argc, char **argv)
 				if(!(TMCL_MotorRotate()))	return RT_EOK	;
 				result = RT_EINVAL;
 			}
-			if (!strcmp(argv[1], "move"))
+			if (!strcmp(argv[1], "move") )
 			{
-				ActualCommand.Motor=atoi(argv[2]);
-				ActualCommand.Type=MVP_REL;
-				ActualCommand.Value.Int32=atoi(argv[3]);
-				if(!TMCL_MoveToPosition())	return RT_EOK;
-				result =RT_EINVAL;
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				else 
+				{
+					ActualCommand.Motor=atoi(argv[2]);
+					ActualCommand.Type=MVP_REL;
+					ActualCommand.Value.Int32=atoi(argv[3]);
+					if(!TMCL_MoveToPosition())	return RT_EOK;
+					result =RT_EINVAL;
+				}
 			}
 			if (!strcmp(argv[1], "moveto"))
 			{
-				ActualCommand.Motor=atoi(argv[2]);
-				ActualCommand.Type=MVP_ABS;
-				ActualCommand.Value.Int32=atoi(argv[3]);
-				if(!TMCL_MoveToPosition())	return RT_EOK;
-				result =RT_EINVAL;
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				else 
+				{
+					ActualCommand.Motor=atoi(argv[2]);
+					ActualCommand.Type=MVP_ABS;
+					ActualCommand.Value.Int32=atoi(argv[3]);
+					if(!TMCL_MoveToPosition())	return RT_EOK;
+					result =RT_EINVAL;
+				}
 			}
 			if (!strcmp(argv[1], "gohome"))
 			{
+					pressureAlarm=0;
+				
+				  //buttonRESETpressed=TRUE;
+				
 					timer_stop();		
 				
 					ActualCommand.Motor=atoi(argv[2]);
@@ -627,6 +670,8 @@ int motor(int argc, char **argv)
 			}
 			if (!strcmp(argv[1], "golimit"))
 			{
+					pressureAlarm=0;
+				
 					timer_stop();
 				
 					ActualCommand.Motor=atoi(argv[2]);
@@ -647,20 +692,22 @@ int motor(int argc, char **argv)
 				if (!strcmp(argv[2], "position")) 				ActualCommand.Type=actual_position;
 				if (!strcmp(argv[2], "is_homed")) 				ActualCommand.Type=is_homed;
 				if (!strcmp(argv[2], "is_stop")) 					ActualCommand.Type=is_stop;
-
+				if (!strcmp(argv[2], "is_reach")) 				ActualCommand.Type=is_reach;
 			
 				if (!strcmp(argv[2], "next_speed")) 			ActualCommand.Type=next_speed;
 				if (!strcmp(argv[2], "next_position")) 	 	ActualCommand.Type=next_position;		
 				if (!strcmp(argv[2], "VMAX")) 					 	ActualCommand.Type=max_v_positioning;
 				if (!strcmp(argv[2], "AMAX")) 		 				ActualCommand.Type=max_acc;
-				if (!strcmp(argv[2], "position_reached")) ActualCommand.Type=position_reached;			
+				if (!strcmp(argv[2], "position_reached")) ActualCommand.Type=position_reached;		
+				
 				if (!strcmp(argv[2], "rightLimit")) 			ActualCommand.Type=rightLimit_SwS;
 				if (!strcmp(argv[2], "leftLimit")) 				ActualCommand.Type=leftLimit_SwS;
+				if (!strcmp(argv[2], "limit")) 			      ActualCommand.Type=allLimit_SwS;
 				
 				if (!strcmp(argv[2], "homeSensor")) 			ActualCommand.Type=home_SenS;
 				
-				if (!strcmp(argv[2], "rightLimit?"))			  ActualCommand.Type=rightLimit_disable;
-				if (!strcmp(argv[2], "leftLimit?")) 			  ActualCommand.Type=leftLimit_disable;
+				if (!strcmp(argv[2], "rightLimit?"))			ActualCommand.Type=rightLimit_disable;
+				if (!strcmp(argv[2], "leftLimit?")) 			ActualCommand.Type=leftLimit_disable;
 				
 				if (!strcmp(argv[2], "ramp_div")) 			  ActualCommand.Type=ramp_divisor;
 				if (!strcmp(argv[2], "pulse_div")) 				ActualCommand.Type=pulse_divisor;	
@@ -678,27 +725,7 @@ int motor(int argc, char **argv)
 				}
 				else 
 				{
-						rt_kprintf("Usage: \n");
-					//用户接口
-					  rt_kprintf("motor get speed <axis>             -get the current speed \n");
-					  rt_kprintf("motor get position <axis>          -get the current position\n");
-					 
-					  rt_kprintf("motor get rightLimit <axis>        -get right switch status\n");
-					  rt_kprintf("motor get leftLimit  <axis>        -get left switch status\n");	
-					
-					  rt_kprintf("motor get is_homed <axis>          -is axis homed or not\n");	
-					  rt_kprintf("motor get is_stop <axis>           -is axis stop or not\n");	
-						rt_kprintf("motor get homeSensor <axis>        -get home sensor status\n");	
-					//调试接口
-					CMD_TRACE("motor get next_speed <axis>        -get the target speed \n");
-					CMD_TRACE("motor get next_position <axis>     -get the target position to move\n");
-					
-					CMD_TRACE("motor get VMAX <axis>              -get max positioning speed\n");
-					CMD_TRACE("motor get AMAX <axis>              -get max acceleration\n");
-		
-					CMD_TRACE("motor get position_reached <axis>  -is reach positon or not\n");
-					CMD_TRACE("motor get ramp_div <axis>          -get ramp divisor value\n");
-					CMD_TRACE("motor get pulse_div <axis>         -get pulse divisor value\n");		
+					printf_cmd_motor_get();
 					result =REPLY_INVALID_CMD;
 				}
 			}
@@ -735,18 +762,7 @@ int motor(int argc, char **argv)
 				}
 				else 
 				{
-				  rt_kprintf("Usage: \n");
-				  rt_kprintf("motor set speed <axis> <value>              -set the target speed \n");				
-					CMD_TRACE("motor set next_position <axis> <value>      -set the target position to move\n");
-					CMD_TRACE("motor set actual_position <axis> <value>    -set the current position\n");				
-					CMD_TRACE("motor set actual_speed <axis> <value>       -set the current speed \n");
-					CMD_TRACE("motor set VMAX <axis> <value>               -set max positioning speed\n");
-					CMD_TRACE("motor set AMAX <axis> <value>               -set max acceleration\n");
-					CMD_TRACE("motor set ramp_div <axis> <value>           -set ramp divisor value\n");
-					CMD_TRACE("motor set pulse_div <axis> <value>          -set pulse divisor value\n");	
-					CMD_TRACE("motor set rightLimit <axis> <value>         -set right limit switch\n");
-					CMD_TRACE("motor set leftLimit <axis> <value>          -set left limit switch\n");
-					CMD_TRACE("motor set limitSignal <axis> <value>        -set limit signal effective trigger level\n");					
+					printf_cmd_motor_set();
 					result =REPLY_INVALID_CMD;														
 				}				
 			}
@@ -761,14 +777,17 @@ int motor(int argc, char **argv)
 			rt_kprintf("Usage: \n");
 			rt_kprintf("motor stop <axisNum>                  - stop motor\n");		
 			rt_kprintf("motor rotate <axisNum> <speed>        - rotate motor\n");	
-			rt_kprintf("motor move <axisNum> <position>       - absolute motion of the motor\n");
-			rt_kprintf("motor moveto <axisNum> <position>     -relative motion of the motor\n");
+			rt_kprintf("motor moveto <axisNum> <position>     - absolute motion of the motor\n");
+			rt_kprintf("motor move <axisNum> <position>       - relative motion of the motor\n");
 
 			rt_kprintf("motor get <type> <axisNum>            - get axis parameter\n");	
 			rt_kprintf("motor set <type> <axisNum> <value>    - set axis parameter\n");	
 			
 			rt_kprintf("motor gohome <axisNum> <speed>        - home sensor as origin position\n");	
 			rt_kprintf("motor golimit <axisNum> <speed>       - limit sensor as origin position\n");	
+			
+			rt_kprintf("motor reset                           - motor reset\n");		
+			rt_kprintf("motor reset?                          - is axis reset or not\n");	
 		
 		}
 	  return result;
@@ -789,7 +808,7 @@ static void MotorLimitProcess(uint8_t axisNum)
 			//CMD_TRACE("%d GoHome=%d,GoLimit=%d,SwitchStatus=%d,V=%d\n",axisNum,homeInfo.GoHome[axisNum],homeInfo.GoLimit[axisNum],SwitchStatus,Read429Short(IDX_VACTUAL|(axisNum<<5)));
 
 			//左				需要再判断速度													右              //碰到限位停止，需要再次发命令运动
-			if((((SwitchStatus& (0x02<<axisNum*2))?1:0) ==1)	||  (((SwitchStatus& (0x01<<axisNum*2)) ?1:0)==1)	\
+			if(((((SwitchStatus& (0x02<<axisNum*2))?1:0) ==1)	||  (((SwitchStatus& (0x01<<axisNum*2)) ?1:0)==1))	\
 				   && ( Read429Short(IDX_VACTUAL|(axisNum<<5))==0 )	)						 
 			{					
 					
@@ -842,3 +861,45 @@ int MotorLimitCheck_thread_init(void)
     return 0;
 }
 
+static void printf_cmd_motor_set(void)
+{
+		rt_kprintf("Usage: \n");
+		rt_kprintf("motor set speed <axis> <value>              -set the target speed \n");				
+		CMD_TRACE("motor set next_position <axis> <value>      -set the target position to move\n");
+		CMD_TRACE("motor set actual_position <axis> <value>    -set the current position\n");				
+		CMD_TRACE("motor set actual_speed <axis> <value>       -set the current speed \n");
+		CMD_TRACE("motor set VMAX <axis> <value>               -set max positioning speed\n");
+		CMD_TRACE("motor set AMAX <axis> <value>               -set max acceleration\n");
+		CMD_TRACE("motor set ramp_div <axis> <value>           -set ramp divisor value\n");
+		CMD_TRACE("motor set pulse_div <axis> <value>          -set pulse divisor value\n");	
+		CMD_TRACE("motor set rightLimit <axis> <value>         -set right limit switch\n");
+		CMD_TRACE("motor set leftLimit <axis> <value>          -set left limit switch\n");
+		CMD_TRACE("motor set limitSignal <axis> <value>        -set limit signal effective trigger level\n");		
+}
+static void printf_cmd_motor_get(void)
+{
+	rt_kprintf("Usage: \n");
+	//用户接口
+	rt_kprintf("motor get speed <axis>             -get the current speed \n");
+	rt_kprintf("motor get position <axis>          -get the current position\n");
+	 
+	rt_kprintf("motor get limit all                -get all limit switch status\n");	
+	rt_kprintf("motor get rightLimit <axis>        -get right switch status\n");
+	rt_kprintf("motor get leftLimit  <axis>        -get left switch status\n");	
+	
+	rt_kprintf("motor get is_homed <axis>          -is axis homed or not\n");	
+	rt_kprintf("motor get is_stop <axis>           -is axis stop or not\n");	
+	rt_kprintf("motor get is_reach <axis>          -is axis reach the position\n");	
+	rt_kprintf("motor get homeSensor <axis>        -get home sensor status\n");	
+	//调试接口
+	CMD_TRACE("motor get next_speed <axis>        -get the target speed \n");
+	CMD_TRACE("motor get next_position <axis>     -get the target position to move\n");
+	
+	CMD_TRACE("motor get VMAX <axis>              -get max positioning speed\n");
+	CMD_TRACE("motor get AMAX <axis>              -get max acceleration\n");
+
+	CMD_TRACE("motor get position_reached <axis>  -is reach positon or not\n");
+	CMD_TRACE("motor get ramp_div <axis>          -get ramp divisor value\n");
+	CMD_TRACE("motor get pulse_div <axis>         -get pulse divisor value\n");			
+	
+}

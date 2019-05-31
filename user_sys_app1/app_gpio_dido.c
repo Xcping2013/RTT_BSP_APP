@@ -57,6 +57,8 @@ static rt_uint16_t out_flash_cnt[9]={0};
 static int timer_10ms_init(void);
 static void timeout1(void *parameter);
 
+static void InitIn8AsExti(void);
+
 void dido_hw_init(void)
 {    
 	uint8_t i;
@@ -75,6 +77,11 @@ void dido_hw_init(void)
 		rt_pin_write(rgb_pin_num[i],PIN_LOW);
 	} 
 	timer_10ms_init();
+
+#if defined(USING_IN8_EXIT)	
+	InitIn8AsExti();
+#endif
+	
 }
 //
 uint8_t getChInput(uint8_t channel)
@@ -212,7 +219,7 @@ static int timer_10ms_init(void)
 }
 static void timeout1(void *parameter)
 {
-	//buttonSTART_process(1,1);
+	buttonSTART_process(1,1);
 	buttonRESET_process(2,2);
 	for(uint8_t i=0;i<9;i++)
 	{
@@ -292,5 +299,88 @@ int rgb(int argc, char **argv)
 //MSH_CMD_EXPORT(output_off, set the output channel off);
 //MSH_CMD_EXPORT(output_flashing, start or stop output flashing);
 //MSH_CMD_EXPORT(rgb_pin_num, set the rgb_pin_num led);
+/**/
+//pressureAlarm
+
+uint8_t pressureAlarm=0;
+//HAL_NVIC_SetPriority(irqmap->irqno, 4, 0);  5-->4
+void alarm_on(void *args)
+{
+	if(INPUT8==0 && buttonRESETpressed==0 )	 	
+	{			
+		HardStop(2);//HardStop(1);HardStop(0);
+		//buttonRESETpressed=0;	KEY_RESET_LED=0;	KEY_START_pressed=0;	KEY_START_LED=0;
+		homeInfo.Homed[2]=FALSE;
+		homeInfo.GoHome[2]=FALSE;	
+		homeInfo.GoLimit[2]=FALSE;	
+		//pressureAlarm=1;
+		CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+	} 
+}
+
+void InitIn8AsExti(void)
+{
+  rt_pin_attach_irq(inputs_pin_num[8-1], PIN_IRQ_MODE_FALLING, alarm_on, RT_NULL);
+	rt_pin_irq_enable(inputs_pin_num[8-1], PIN_IRQ_ENABLE);
+}
 
 
+
+
+
+
+//
+//int msh_gpio(int argc, char **argv)
+//{
+//    if (argc == 1)
+//    {
+//			CMD_TRACE("gpio get\n");
+//			CMD_TRACE("  port:enum<A|a|B|b|C|c|D|d|E|e|F|f|G|g|H|h>\n");
+//			CMD_TRACE("  pin:uint8<0,15>\n");
+//			CMD_TRACE("gpio set");
+//			CMD_TRACE("  port:enum<A|a|B|b|C|c|D|d|E|e|F|f|G|g|H|h>\n");
+//			CMD_TRACE("  pin:uint8<0,15>\n");
+//			CMD_TRACE("  state:enum<0|1>\n");
+//			
+//			CMD_TRACE("gpio config show\n");
+//			CMD_TRACE("  port:enum<A|a|B|b|C|c|D|d|E|e|F|f|G|g|H|h>\n");
+//			CMD_TRACE("  pin:uint8<0,15>\n");
+//			
+//			CMD_TRACE("gpio config\n");
+//			CMD_TRACE("  port:enum<A|a|B|b|C|c|D|d|E|e|F|f|G|g|H|h>\n");
+//			CMD_TRACE("  pin:uint8<0,15>\n");
+//			CMD_TRACE("  mode:enum<input|outputPP|outputOD|altPP|altOD|analog|analogADC>(input)\n");
+//			CMD_TRACE("  pullup:enum<none|up|down>(none)\n");
+//			CMD_TRACE("  speed:enum<low|med|high|vhigh>(high)\n");		
+//			CMD_TRACE("  altFunc:uint8<0,15>(0)\n");
+
+//      return -RT_ERROR;
+//    }
+//    else
+//    {
+
+//    }
+//    return 0;
+//}
+
+//MSH_CMD_EXPORT_ALIAS(msh_gpio, gpio,GPIO commands);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//

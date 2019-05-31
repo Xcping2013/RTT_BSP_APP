@@ -8,7 +8,7 @@
 #include "mbtmc429_cube_usart.h"
 #include "bsp_defines.h"
 
-#define USART_REC_LEN  		200  	
+#define USART_REC_LEN  		20  	
 	  	
 extern uint8_t  USART_RX_BUF[USART_REC_LEN]; 	
 extern uint16_t USART_RX_STA;         				
