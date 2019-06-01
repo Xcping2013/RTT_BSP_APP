@@ -51,7 +51,7 @@ static rt_err_t uart_input(rt_device_t dev, rt_size_t size)
 	return RT_EOK;
 }
 //
-static void serial_thread_entry(void *parameter)
+static void serial_thread_entry1(void *parameter)
 {
     char ch;
     while (1)
@@ -98,7 +98,7 @@ static void serial_thread_entry(void *parameter)
     }
 }
 //
-int uart_stream_thread_init(void)
+int uart_stream_thread_init1(void)
 {
     rt_err_t ret = RT_EOK;
 		memset(uart_rx_buff, '\0', uart_rx_len_max);
@@ -114,7 +114,7 @@ int uart_stream_thread_init(void)
     //rt_device_open(serial, RT_DEVICE_FLAG_INT_RX);				/* 以中断接收及轮询发送方式打开串口设备 */
     rt_device_set_rx_indicate(serial, uart_input);				/* 设置接收回调函数 */
     //优先级需大于FINSH，防止处理数据时被MSH命令打断后采集到误数据
-    rt_thread_t thread = rt_thread_create("serial", serial_thread_entry, RT_NULL, 1024, 19, 5);
+    rt_thread_t thread = rt_thread_create("serial", serial_thread_entry1, RT_NULL, 1024, 19, 5);
     if (thread != RT_NULL)
     {
         rt_thread_startup(thread);
@@ -138,9 +138,11 @@ int printdata(int argc, char **argv)
 	return 0;
 }
 //
+
 void USART3_IRQHandler(void)
 {
 	rt_interrupt_enter();
+	
 	int ch;
 	if ((__HAL_UART_GET_FLAG(&huart3, UART_FLAG_RXNE) != RESET) && (__HAL_UART_GET_IT_SOURCE(&huart3, UART_IT_RXNE) != RESET))
 	{
@@ -153,11 +155,61 @@ void USART3_IRQHandler(void)
 			ch = huart3.Instance->DR & 0xff;
 #endif
 
-			//huart1.Instance->TDR = ch;
+//			huart1.Instance->TDR = ch;
 
 			if(ch==0x0d) 
 			{
+				rt_sem_release(&rx_sem);
+				
 				//USART_RX_STA|=0x8000; 
+//				u8 len=USART_RX_STA&0x3fff;	
+//				USART_RX_BUF[len]='\0';
+//									
+//				if(Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) ==0 )				//读取信息的时候如果被其他中断调用（比如一直UART1中断命令），则SPI读取值出问题
+//				{
+//						if(AxisSpeedIsZeroCnt++ > 1)
+//						{
+//							AxisSpeedIsZeroCnt=0;
+//							closeSerial();
+//							rt_kprintf("motor[2] is stop and stop printing data\n>>");
+//						}
+//				}
+//				else 
+//				{
+//					AxisSpeedIsZeroCnt=0;
+//					if(FirstDataOut<2)	FirstDataOut++;
+//					else 
+//					{
+//						motorPosition[AXIS_Z]=Read429Int(IDX_XACTUAL|(AXIS_Z<<5));
+//						rt_kprintf("P[2]=%d,Press%s\n",motorPosition[AXIS_Z],&USART_RX_BUF);			
+//					}
+//					USART_RX_STA=0; 
+//					memset(USART_RX_BUF, '\0', USART_REC_LEN);
+//				}
+			}
+			else
+			{
+				USART_RX_BUF[USART_RX_STA&0X3FFF]=ch;
+				USART_RX_STA++;
+				if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0; 
+			}		 
+		}
+		
+    __HAL_UART_CLEAR_FLAG(&huart3, UART_FLAG_RXNE);
+  }
+	rt_interrupt_leave();
+}
+
+
+static void serial_thread_entry(void *parameter)
+{
+    char ch;
+    while (1)
+    {
+
+
+        rt_sem_take(&rx_sem, RT_WAITING_FOREVER);
+
 				u8 len=USART_RX_STA&0x3fff;	
 				USART_RX_BUF[len]='\0';
 									
@@ -182,17 +234,26 @@ void USART3_IRQHandler(void)
 					USART_RX_STA=0; 
 					memset(USART_RX_BUF, '\0', USART_REC_LEN);
 				}
-			}
-			else
-			{
-				USART_RX_BUF[USART_RX_STA&0X3FFF]=ch;
-				USART_RX_STA++;
-				if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0; 
-			}		 
-		}
-    __HAL_UART_CLEAR_FLAG(&huart3, UART_FLAG_RXNE);
-  }
-	rt_interrupt_leave();
+
+    }
 }
+//
+int uart_stream_thread_init(void)
+{
+    rt_err_t ret = RT_EOK;
+		USART_RX_STA=0; 
+		memset(USART_RX_BUF, '\0', USART_REC_LEN);
 
+    rt_sem_init(&rx_sem, "rx_sem", 0, RT_IPC_FLAG_FIFO);		
 
+    rt_thread_t thread = rt_thread_create("uart3", serial_thread_entry, RT_NULL, 1024, 19, 5);
+    if (thread != RT_NULL)
+    {
+        rt_thread_startup(thread);
+    }
+    else
+    {
+        ret = RT_ERROR;
+    }
+    return ret;	
+}

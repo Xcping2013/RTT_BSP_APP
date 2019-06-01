@@ -221,6 +221,7 @@ static void timeout1(void *parameter)
 {
 	buttonSTART_process(1,1);
 	buttonRESET_process(2,2);
+	//DEBUG_TRACE("timeout1 enter\n");	
 	for(uint8_t i=0;i<9;i++)
 	{
 		if ((out_flash_on[i]==1) && (out_flash_cnt[i]++>out_flash_delay[i]))

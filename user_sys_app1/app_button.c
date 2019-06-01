@@ -14,18 +14,17 @@ uint8_t buttonRESETCNT=0;
 //启动按键可以和启动灯、复位灯一起搭配  	//开始按键自锁 复位按键解锁	
 void buttonSTART_process(uint8_t inCh, uint8_t outCh)
 {
-	if(buttonRESETpressed==FALSE)																											//电机在复位中，START无效
+	if(buttonRESETpressed==FALSE)																									  //电机在复位中，START无效
 	{
-		if( getChInput(inCh)==IN_ON && buttonSTARTpressed==FALSE )					
+		if( getChInput(inCh)==IN_ON)// && buttonSTARTpressed==FALSE )					
 		{
 			buttonSTARTCNT++;
 			//delay_ms(20);		
 			if( buttonSTARTCNT==2)											 																//开始按键
 			{
-				 setChOutput(outCh,1);	setChOutput(2,0);	
-				 //while(getChInput(inCh)==IN_ON) {;} 																						//等待松开									 									 			
-				 buttonSTARTpressed=TRUE;  
-				 buttonRESETpressed=FALSE;			
+				 setChOutput(1,1);	setChOutput(2,0);	
+				 //while(getChInput(inCh)==IN_ON) {;} 																		//等待松开									 									 			
+				 buttonSTARTpressed=TRUE;  		
 				 CMD_TRACE("buttonSTART=1\n");
 			}
 		}

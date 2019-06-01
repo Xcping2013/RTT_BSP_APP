@@ -27,9 +27,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "bsp_include.h"	
-#include "app_include.h"
-#include "app_Commands.h"
+//#include "bsp_include.h"	
+//#include "app_include.h"
+//#include "app_Commands.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,13 +44,18 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define TXBUFFERSIZE                      (COUNTOF(aTxBuffer) - 1)
+/* Size of Reception buffer */
+#define RXBUFFERSIZE                      TXBUFFERSIZE
+  
+/* Exported macro ------------------------------------------------------------*/
+#define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t aTxBuffer[] ="+0.001@\n";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,14 +66,13 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-at24cxx_t at24c256=
-{
-	{0},
-	{PB_4,PB_3},	//SDA SCL
-	0xA0,
-};
+//at24cxx_t at24c256=
+//{
+//	{0},
+//	{PB_4,PB_3},	//SDA SCL
+//	0xA0,
+//};
 /* USER CODE END 0 */
-
 /**
   * @brief  The application entry point.
   * @retval int
@@ -79,6 +83,7 @@ int main(void)
 	uint32_t tickLedstart;
 	uint32_t tickBeepstart;
   /* USER CODE END 1 */
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -105,9 +110,9 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-	__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
+	//__HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 	
-	at24cxx_hw_init();
+//	at24cxx_hw_init();
 	HAL_Delay(50);
 	
 	tickLedstart=HAL_GetTick();
@@ -120,27 +125,28 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+		HAL_Delay(10);
+		HAL_UART_Transmit(&huart3, (uint8_t*)aTxBuffer, TXBUFFERSIZE, 5000);
     /* USER CODE BEGIN 3 */
-		CommandCheckAndExe();
+		//CommandCheckAndExe();
 		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
 		{
 			HAL_GPIO_TogglePin(LED_SYS_GPIO_Port,LED_SYS_Pin);
 			tickLedstart=HAL_GetTick();
 		}
-		if(abs((int)(HAL_GetTick()-tickBeepstart))>350)
-		{
-			if(beep_flash_on) 
-			{
-				HAL_GPIO_TogglePin(BEEP_GPIO_Port,BEEP_Pin);
-				tickBeepstart=HAL_GetTick();
-			}
-			else 
-			{
-				HAL_GPIO_WritePin(BEEP_GPIO_Port,BEEP_Pin, GPIO_PIN_RESET);
-			}
-		}
-		FlexButtonTest_APP();
+//		if(abs((int)(HAL_GetTick()-tickBeepstart))>350)
+//		{
+//			if(beep_flash_on) 
+//			{
+//				HAL_GPIO_TogglePin(BEEP_GPIO_Port,BEEP_Pin);
+//				tickBeepstart=HAL_GetTick();
+//			}
+//			else 
+//			{
+//				HAL_GPIO_WritePin(BEEP_GPIO_Port,BEEP_Pin, GPIO_PIN_RESET);
+//			}
+//		}
+//		FlexButtonTest_APP();
   }
 	
 

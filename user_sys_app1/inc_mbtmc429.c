@@ -26,8 +26,9 @@ at24cxx_t at24c256=
 	{PB_4,PB_3},	//SDA SCL
 	0xA0,
 };
-
-int mbtmc429_hw_init(void)
+//HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+//HAL_NVIC_SetPriority(USART3_IRQn, 6, 0);
+int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 {		
 	SysRunLed_thread_init();
 	
@@ -40,11 +41,11 @@ int mbtmc429_hw_init(void)
 	//MotorLimitCheck_thread_init();
 
 	MX_USART3_UART_Init();
-	//uart_stream_thread_init();	
+	uart_stream_thread_init();	
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver2.0 build at %s %s\n\n", __TIME__, __DATE__);
+	rt_kprintf("\nfirmware ver2.2 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }
