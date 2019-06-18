@@ -182,8 +182,8 @@ struct ad7124_st_reg ad7124_regs0[] =
 //	{0x30, 0x800000, 3, 1}, /* AD7124_Offset_7 */
 	
 	{0x31, 0x500000, 3, 1}, /* AD7124_Gain_0 */
-//	{0x32, 0x500000, 3, 1}, /* AD7124_Gain_1 */
-//	{0x33, 0x500000, 3, 1}, /* AD7124_Gain_2 */
+	{0x32, 0x500000, 3, 1}, /* AD7124_Gain_1 */
+	{0x33, 0x500000, 3, 1}, /* AD7124_Gain_2 */
 //	{0x34, 0x500000, 3, 1}, /* AD7124_Gain_3 */
 //	{0x35, 0x500000, 3, 1}, /* AD7124_Gain_4 */
 //	{0x36, 0x500000, 3, 1}, /* AD7124_Gain_5 */
@@ -221,7 +221,7 @@ int32_t ad7124_setup(struct ad7124_dev *device)
 	device->check_ready = 1;
 
 	/* Initialize registers AD7124_ADC_Control through AD7124_Filter_7. */
-	for(reg_nr = AD7124_Status; (reg_nr < 14) && !(ret < 0);//AD7124_Offset_0
+	for(reg_nr = AD7124_Status; (reg_nr < 16) && !(ret < 0);//AD7124_Offset_0
 	    reg_nr++) {
 		if (device->regs[reg_nr].rw == AD7124_RW) {
 			ret = ad7124_write_register(device, device->regs[reg_nr]);
@@ -338,16 +338,27 @@ void readAD(void)
 			AD7124_TRACE("ad7124_read_data_err,ret=%d\n",ret);
     }	
 }
-
+//uint8_t voltage_cs=50;
+uint16_t voltage_cs=625; //mV;	PGA=4
 void voltage(void)
 {
-		ad7124_regs1[AD7124_Channel_0].value=0x8064;
-		ad7124_regs1[AD7124_Channel_1].value=0x00c7;
-		ad7124_regs1[AD7124_Channel_2].value=0x0022;
-		//Enable=1	00011 = AIN3
+		ad7124_regs1[AD7124_Channel_0].value=0x8064;	//AIN3、AIN4
+		ad7124_regs1[AD7124_Channel_1].value=0x00c7;	//DISABLE
+		ad7124_regs1[AD7124_Channel_2].value=0x0022;	//DISABLE
+		
+		if(voltage_cs=50)	
+		{
+			ad7124_regs1[AD7124_Config_1].value=0x0870;		//PGA=1  双极性  内部基准  AIN±2.5V  ±50V Vin
+		}
+		if(voltage_cs=625)	
+		{
+			ad7124_regs1[AD7124_Config_1].value=0x0872;		//PGA=1  双极性  内部基准  AIN±2.5V  ±50V Vin
+		}
 		ad7124_write_register(ad7124_handler,ad7124_regs1[AD7124_Channel_0]);
 		ad7124_write_register(ad7124_handler,ad7124_regs1[AD7124_Channel_1]);
 		ad7124_write_register(ad7124_handler,ad7124_regs1[AD7124_Channel_2]);
+	
+		ad7124_write_register(ad7124_handler,ad7124_regs1[AD7124_Config_1]);
 
 		ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
 
@@ -356,8 +367,12 @@ void voltage(void)
 		double voltage;
 		uint8_t voltageStr[10];
 		voltage=AD7124_ReadAverData(ad7124_handler);
-		//AD7124_TRACE("voltageD=%f uV\n",voltage);
-		sprintf(voltageStr,"%lf",voltage);							//RTT prinf float
+		
+		//if(voltage_cs=50)	
+		{
+			sprintf(voltageStr,"%lf",voltage);		
+		}
+		//sprintf(voltageStr,"%lf",voltage);							//RTT prinf float
 		AD7124_TRACE("voltageStr=%s uV\n",voltageStr);
 }
 void res(void)
@@ -389,9 +404,9 @@ void res(void)
 }
 void current(void)
 {
-		ad7124_regs1[AD7124_Channel_0].value=0x0064;
+		ad7124_regs1[AD7124_Channel_0].value=0x0064;													//DISABLE
 		ad7124_regs1[AD7124_Channel_1].value=0x80c7;													//ENABLE
-		ad7124_regs1[AD7124_Channel_2].value=0x0022;
+		ad7124_regs1[AD7124_Channel_2].value=0x0022;													//DISABLE
 	
 		ad7124_regs1[AD7124_Config_1].value=0x0877;														//PGA=128
 	

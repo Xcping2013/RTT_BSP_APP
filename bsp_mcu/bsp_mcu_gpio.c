@@ -6,6 +6,8 @@
 
 #ifndef	USING_RTT
 
+	#define	rt_uint16_t	uint16_t
+	#define	RT_NULL 	NULL
 	//#define	STM32F10X_PIN_NUMBERS 100
 	#define USING_STM32F030F4	
 	

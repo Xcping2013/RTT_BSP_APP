@@ -1,7 +1,7 @@
 #ifndef  __TM1638_H
 #define  __TM1638_H
 
-#include "sys.h"
+#include "bsp_defines.h"
 
 /***		读取和接收1个BIT都在时钟的上升沿操作
 TM1638是带键盘扫描接口的LED驱动控制专用电路

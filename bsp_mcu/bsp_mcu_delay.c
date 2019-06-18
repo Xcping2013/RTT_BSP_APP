@@ -9,6 +9,7 @@
 //中断里不能能用rt_thread_delay
 #ifndef	USING_RTT
 #define RT_TICK_PER_SECOND 1000
+#define rt_uint32_t	uint32_t
 #endif
 
 void drv_mdelay(uint16_t nms)

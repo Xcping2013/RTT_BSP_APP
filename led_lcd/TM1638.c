@@ -1,5 +1,5 @@
 #include "TM1638.h"
-#include "delay.h"
+#include "bsp_mcu_delay.h"
 #include "string.h"
 
 uint32_t showNum[10]={C7_0,C7_1,C7_2,C7_3,C7_4,C7_5,C7_6,C7_7,C7_8,C7_9};

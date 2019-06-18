@@ -225,9 +225,12 @@ int ParamSave(int argc, char **argv)
 		{
 			if (!strcmp(argv[2], "button_online")) 				g_tParam.Project_ID  = BUTTON_ONLINE;	
 			else if (!strcmp(argv[2], "button_offline")) 	g_tParam.Project_ID  = BUTTON_OFFLINE;	
-			else if (!strcmp(argv[2], "OQC-Flex")) 		    g_tParam.Project_ID  = OQC_FLEX;	
+			else if (!strcmp(argv[2], "OQC-Flex")) 		    g_tParam.Project_ID  = OQC_FLEX;				//µ¥Öá
 			else if (!strcmp(argv[2], "lidopen")) 				g_tParam.Project_ID  = LIDOPEN;	
-			else if (!strcmp(argv[2], "button_road")) 				g_tParam.Project_ID  = BUTTON_ROAD;	
+			else if (!strcmp(argv[2], "button_road")) 		g_tParam.Project_ID  = BUTTON_ROAD;			//Ë«Öá
+			
+			else if (!strcmp(argv[2], "BUTTON-AXIS-1")) 		      g_tParam.Project_ID  = OQC_FLEX;				//µ¥Öá
+			else if (!strcmp(argv[2], "BUTTON-AXIS-2")) 		      g_tParam.Project_ID  = BUTTON_ROAD;			//Ë«Öá
 			else 
 			{
 				rt_kprintf("Usage: \n");
@@ -238,6 +241,10 @@ int ParamSave(int argc, char **argv)
 				
 				rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to OQC-Flex fixture\n");
 				rt_kprintf("ParamSave ProjectType lidopen            -set controller fit to lidopen fixture\n");
+				
+				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-1      -set controller fit to use 1 motor\n");
+				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-2      -set controller fit to use 2 motor\n");
+				
 				result = REPLY_INVALID_CMD;
 			}
 		}
