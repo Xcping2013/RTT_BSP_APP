@@ -6,6 +6,12 @@
 //#include "inc_mbtmc429.h"
 //CubeMX txt
 
+
+uint8_t rgb_pin_num[3]={PD_6,PD_5,PD_4};
+
+
+#if defined(USING_INC_MBTMC429) 
+
 uint8_t	inputs_pin_num[INPUT_COUNT]=
 {
 	PB_5,	//IN1
@@ -45,10 +51,7 @@ uint8_t	outputs_pin_num[OUTPUT_COUNT]=
 //	PE_14  ,
 //	PE_15	 ,
 };
-uint8_t rgb_pin_num[3]={PD_6,PD_5,PD_4};
 uint8_t homeSensorPin[3]={PB_9,PE_0,PE_1};
-
-#if defined(USING_INC_MBTMC429) 
 
 static rt_timer_t timer1;
 static rt_uint8_t out_flash_on[9]={0};
@@ -78,9 +81,15 @@ void dido_hw_init(void)
 	} 
 	timer_10ms_init();
 
+	if(g_tParam.Project_ID!=AOI_2AXIS || g_tParam.Project_ID!=COMMON || g_tParam.Project_ID!=LIDOPEN)
+	{
+	
+	
 #if defined(USING_IN8_EXIT)	
 	InitIn8AsExti();
 #endif
+		
+	}
 	
 }
 //
@@ -219,8 +228,11 @@ static int timer_10ms_init(void)
 }
 static void timeout1(void *parameter)
 {
-	buttonSTART_process(1,1);
-	buttonRESET_process(2,2);
+	if(g_tParam.Project_ID!=AOI_2AXIS || g_tParam.Project_ID!=COMMON || g_tParam.Project_ID!=LIDOPEN)
+	{
+		buttonSTART_process(1,1);
+		buttonRESET_process(2,2);	
+	}
 	//DEBUG_TRACE("timeout1 enter\n");	
 	for(uint8_t i=0;i<9;i++)
 	{

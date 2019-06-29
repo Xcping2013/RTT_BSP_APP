@@ -126,7 +126,8 @@ void LoadParamFromEeprom(void)
 		g_tParam.ParamVer   = PARAM_VER;
 		g_tParam.MasterBaudrate  = 115200;
 		g_tParam.SlaveBaudrate   = 115200;
-		g_tParam.Project_ID = OQC_FLEX;
+		g_tParam.Project_ID = COMMON;
+		//g_tParam.Project_ID = OQC_FLEX;
 	
 #if defined(USING_INC_MBTMC429) 
 		
@@ -187,6 +188,12 @@ void LoadParamFromEeprom(void)
 		case BUTTON_ROAD: 
 			DEBUG_TRACE("\ncontroller init ok --- type: BUTTON_ROAD\n");
 			break;
+		case AOI_2AXIS: 
+			DEBUG_TRACE("\ncontroller init ok --- type: AOI-2AXIS\n");
+			break;
+		case COMMON: 
+			DEBUG_TRACE("\ncontroller init ok --- type: common user\n");
+			break;
 		default:
 			DEBUG_TRACE("\ncontroller init ok --- type: common user\n");
 		break;
@@ -231,6 +238,10 @@ int ParamSave(int argc, char **argv)
 			
 			else if (!strcmp(argv[2], "BUTTON-AXIS-1")) 		      g_tParam.Project_ID  = OQC_FLEX;				//µ¥Öá
 			else if (!strcmp(argv[2], "BUTTON-AXIS-2")) 		      g_tParam.Project_ID  = BUTTON_ROAD;			//Ë«Öá
+			else if (!strcmp(argv[2], "AOI-AXIS-2")) 		      		g_tParam.Project_ID  = AOI_2AXIS;			//Ë«Öá
+			
+			else if (!strcmp(argv[2], "common_use")) 		      		g_tParam.Project_ID  = COMMON;			//Ë«Öá
+			
 			else 
 			{
 				rt_kprintf("Usage: \n");
@@ -244,6 +255,9 @@ int ParamSave(int argc, char **argv)
 				
 				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-1      -set controller fit to use 1 motor\n");
 				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-2      -set controller fit to use 2 motor\n");
+	
+				rt_kprintf("ParamSave ProjectType AOI-AXIS-2         -set controller fit to use 2 motor\n");
+				rt_kprintf("ParamSave ProjectType common_use      -set controller fit to common_use\n");
 				
 				result = REPLY_INVALID_CMD;
 			}

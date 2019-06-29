@@ -83,7 +83,7 @@
 	#define	MX_SPI_Init			  MX_SPI1_Init					
 	#define	ReadWriteSPI			ReadWriteSPI1	
 
-	extern uint8_t homeSensorPin[3];
+//	extern uint8_t homeSensorPin[3];
 #endif
 
 extern uint8_t inputs_pin_num[INPUT_COUNT];

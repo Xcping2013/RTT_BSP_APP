@@ -55,24 +55,34 @@ uint8_t  ProcessCommand(char  *Commands);
 
 				//huart1.Instance->TDR = ch;
 
+//				if((USART_RX_STA&0x8000)==0)
+//				{
+//					if(USART_RX_STA&0x4000)
+//					{
+//						if(ch!=0x0a)USART_RX_STA=0;
+//						else USART_RX_STA|=0x8000;
+//					}
+//					else
+//					{	
+//						if(ch==0x0d)USART_RX_STA|=0x4000;
+//						else
+//						{
+//							USART_RX_BUF[USART_RX_STA&0X3FFF]=ch;
+//							USART_RX_STA++;
+//							if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0; 
+//						}		 
+//					}
+//				}	
 				if((USART_RX_STA&0x8000)==0)
 				{
-					if(USART_RX_STA&0x4000)
-					{
-						if(ch!=0x0a)USART_RX_STA=0;
-						else USART_RX_STA|=0x8000;
-					}
-					else
-					{	
-						if(ch==0x0d)USART_RX_STA|=0x4000;
+						if(ch==0x0d || ch==0x0a ) USART_RX_STA|=0x8000;
 						else
 						{
 							USART_RX_BUF[USART_RX_STA&0X3FFF]=ch;
 							USART_RX_STA++;
 							if(USART_RX_STA>(USART_REC_LEN-1))USART_RX_STA=0; 
 						}		 
-					}
-				}		
+				}
 			}
 			__HAL_UART_CLEAR_FLAG(&huart1, UART_FLAG_RXNE);
 		}

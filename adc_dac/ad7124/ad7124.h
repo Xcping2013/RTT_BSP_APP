@@ -127,13 +127,77 @@
 #define AD7124_STATUS_REG_CH_ACTIVE(x) ((x) & 0xF)
 
 /* ADC_Control Register bits */
+//15~13: 0
+
+/*
+Controls the SCLK inactive edge to DOUT/RDY high time. When DOUT_RDY_DEL is cleared, the delay is
+10 ns minimum. When DOUT_RDY_DEL is set, the delay is increased to 100 ns minimum. This function is
+useful when CS is tied low (the CS_EN bit is set to 0)
+*/
 #define AD7124_ADC_CTRL_REG_DOUT_RDY_DEL   (1 << 12)
+/*
+Continuous read of the data register. When this bit is set to 1 (and the data register is selected), the serial
+interface is configured so that the data register can be continuously read; that is, the contents of the data
+register are automatically placed on the DOUT pin when the SCLK pulses are applied after the RDY pin
+goes low to indicate that a conversion is complete. The communications register does not have to be
+written to for subsequent data reads. To enable continuous read, the CONT_READ bit is set. To disable
+continuous read, write a read data command while the DOUT/ RDY pin is low. While continuous read is
+enabled, the ADC monitors activity on the DIN line so that it can receive the instruction to disable
+continuous read. Additionally, a reset occurs if 64 consecutive 1s occur on DIN; therefore, hold DIN low
+until an instruction is written to the device
+*/
 #define AD7124_ADC_CTRL_REG_CONT_READ      (1 << 11)
+/*
+This bit enables the transmission of the status register contents after each data register read. When
+DATA_STATUS is set, the contents of the status register are transmitted along with each data register
+read. This function is useful when several channels are selected because the status register identifies the
+channel to which the data register value corresponds
+*/
 #define AD7124_ADC_CTRL_REG_DATA_STATUS    (1 << 10)
+/*
+This bit controls the operation of DOUT/RDY during data read operations.
+When CS_EN is cleared, the DOUT pin returns to being a RDY pin within nanoseconds of the SCLK
+inactive edge (the delay is determined by the DOUT_RDY_DEL bit).
+When set, the DOUT/RDY pin continues to output the LSB of the register being read until CS is taken
+high. CS must frame all read operations when CS_EN is set. CS_EN must be set to use the diagnostic
+functions SPI_WRITE_ERR, SPI_READ_ERR, and SPI_SCLK_CNT_ERR
+*/
 #define AD7124_ADC_CTRL_REG_CS_EN          (1 << 9)
+/*
+Internal reference voltage enable. When this bit is set, the internal reference is enabled and available at
+the REFOUT pin. When this bit is cleared, the internal reference is disabled
+*/
 #define AD7124_ADC_CTRL_REG_REF_EN         (1 << 8)
-#define AD7124_ADC_CTRL_REG_POWER_MODE(x)  (((x) & 0x3) << 6)
-#define AD7124_ADC_CTRL_REG_MODE(x)        (((x) & 0xF) << 2)
+/*
+Power Mode Select. These bits select the power mode. The current consumption and output data rate
+ranges are dependent on the power mode.
+00 = low power.
+01 = mid power.
+10 = full power.
+11 = full power
+*/
+#define AD7124_ADC_CTRL_REG_POWER_MODE(x)  (((x) & 0x3) << 6)		//--------------------------------------------
+/*
+0---Continuous conversion mode (default)
+1---Single conversion mode
+2---Standby mode
+3---Power-down mode
+4---Idle mode
+5---Internal zero-scale (offset) calibration
+6---Internal full-scale (gain) calibration
+7---System zero-scale (offset) calibration
+8---System full-scale (gain) calibration
+*/
+#define AD7124_ADC_CTRL_REG_MODE(x)        (((x) & 0xF) << 2)		//--------------------------------------------
+/*
+These bits select the clock source for the ADC. Either the on-chip 614.4 kHz clock can be used or an
+external clock can be used. The ability to use an external clock allows several AD7124-4 devices to be
+synchronized. Also, 50 Hz and 60 Hz rejection is improved when an accurate external clock drives the ADC.
+00 = internal 614.4 kHz clock. The internal clock is not available at the CLK pin.
+01 = internal 614.4 kHz clock. This clock is available at the CLK pin.
+10 = external 614.4 kHz clock.
+11 = external clock. The external clock is divided by 4
+*/
 #define AD7124_ADC_CTRL_REG_CLK_SEL(x)     (((x) & 0x3) << 0)
 
 /* IO_Control_1 Register bits */
@@ -142,9 +206,50 @@
 #define AD7124_IO_CTRL1_REG_GPIO_CTRL2    (1 << 19)
 #define AD7124_IO_CTRL1_REG_GPIO_CTRL1    (1 << 18)
 #define AD7124_IO_CTRL1_REG_PDSW          (1 << 15)
-#define AD7124_IO_CTRL1_REG_IOUT1(x)      (((x) & 0x7) << 11)
+/*
+These bits set the value of the excitation current for IOUT1.		//--------------------------------------------
+000 = off.
+001 = 50 uA
+010 = 100 uA
+011 = 250 uA
+100 = 500 uA
+101 = 750 uA
+110 = 1000 uA
+111 = 1000 uA
+*/
+#define AD7124_IO_CTRL1_REG_IOUT1(x)      (((x) & 0x7) << 11)		//--------------------------------------------
+/*
+These bits set the value of the excitation current for IOUT0.
+000 = off.
+001 = 50 uA
+010 = 100 uA
+011 = 250 uA
+100 = 500 uA
+101 = 750 uA
+110 = 1000 uA
+111 = 1000 uA
+*/
 #define AD7124_IO_CTRL1_REG_IOUT0(x)      (((x) & 0x7) << 8)
-#define AD7124_IO_CTRL1_REG_IOUT_CH1(x)   (((x) & 0xF) << 4)
+/*
+Channel select bits for the excitation current for IOUT1.
+0000 = IOUT1 is available on the AIN0 pin.
+0001 = IOUT1 is available on the AIN1 pin.
+0010 = reserved
+0011 = reserved
+0100 = IOUT1 is available on the AIN2 pin.
+0101 = IOUT1 is available on the AIN3 pin.
+0110 = reserved
+0111 = reserved
+1000 = reserved
+1001 = reserved
+1010 = IOUT1 is available on the AIN4 pin.
+1011 = IOUT1 is available on the AIN5 pin.
+1100 = reserved
+1101 = reserved
+1110 = IOUT1 is available on the AIN6 pin.
+0111 = IOUT1 is available on the AIN7 pin.
+*/
+#define AD7124_IO_CTRL1_REG_IOUT_CH1(x)   (((x) & 0xF) << 4)		//--------------------------------------------
 #define AD7124_IO_CTRL1_REG_IOUT_CH0(x)   (((x) & 0xF) << 0)
 
 /* IO_Control_1 AD7124-8 specific bits */
@@ -158,6 +263,10 @@
 #define AD7124_8_IO_CTRL1_REG_GPIO_CTRL1    (1 << 16)
 
 /* IO_Control_2 Register bits */
+/*
+Enable the bias voltage on the AIN7 channel. When set, the internal bias voltage is available on AIN7.
+14 VBIAS6 
+*/
 #define AD7124_IO_CTRL2_REG_GPIO_VBIAS7   (1 << 15)
 #define AD7124_IO_CTRL2_REG_GPIO_VBIAS6   (1 << 14)
 #define AD7124_IO_CTRL2_REG_GPIO_VBIAS5   (1 << 11)
@@ -233,18 +342,45 @@
 
 /* Channel Registers 0-15 bits */
 #define AD7124_CH_MAP_REG_CH_ENABLE    (1 << 15)
+/*
+Setup select. These bits identify which of the eight setups are used to configure the ADC for this channel. A setup
+comprises a set of four registers: analog configuration, output data rate/filter selection, offset register, and gain
+register. All channels can use the same setup, in which case the same 3-bit value must be written to these bits on
+all active channels. Alternatively, up to eight channels can be configured differently
+*/
 #define AD7124_CH_MAP_REG_SETUP(x)     (((x) & 0x7) << 12)
-#define AD7124_CH_MAP_REG_AINP(x)      (((x) & 0x1F) << 5)
-#define AD7124_CH_MAP_REG_AINM(x)      (((x) & 0x1F) << 0)
+#define AD7124_CH_MAP_REG_AINP(x)      (((x) & 0x1F) << 5)	//Positive analog input AINP input select.
+#define AD7124_CH_MAP_REG_AINM(x)      (((x) & 0x1F) << 0)	//Negative analog input AINM input select
 
 /* Configuration Registers 0-7 bits */
+/*
+Polarity select bit. When this bit is set, bipolar operation is selected. When this bit is cleared, unipolar operation is
+selected
+*/
 #define AD7124_CFG_REG_BIPOLAR     (1 << 11)
 #define AD7124_CFG_REG_BURNOUT(x)  (((x) & 0x3) << 9)
 #define AD7124_CFG_REG_REF_BUFP    (1 << 8)
 #define AD7124_CFG_REG_REF_BUFM    (1 << 7)
 #define AD7124_CFG_REG_AIN_BUFP    (1 << 6)
 #define AD7124_CFG_REG_AINN_BUFM   (1 << 5)
+/*
+Reference source select bits. These bits select the reference source to use when converting on any channels using
+this configuration register.
+00 = REFIN1(+)/REFIN1(-).
+01 = REFIN2(+)/REFIN2(-).
+10 = internal reference.
+11 = AVD*/
 #define AD7124_CFG_REG_REF_SEL(x)  ((x) & 0x3) << 3
+/*
+000 1 ¡À2.5 V
+001 2 ¡À1.25 V
+010 4 ¡À625 mV
+011 8 ¡À312.5 mV
+100 16 ¡À156.25 mV
+101 32 ¡À78.125 mV
+110 64 ¡À39.06 mV
+111 128 ¡À19.53 mV
+*/
 #define AD7124_CFG_REG_PGA(x)      (((x) & 0x7) << 0)
 
 /* Filter Register 0-7 bits */

@@ -41,8 +41,8 @@
 #include "bsp_eeprom_24xx.h"
 
 
-//#define USING_INC_MB1616DEV6	
-#define USING_INC_MBTMC429	
+//#define USING_INC_MB1616DEV6	1
+#define USING_INC_MBTMC429	1	
 
 #if defined(USING_INC_MB1616DEV6) 
   #include "inc_mb1616dev6.h"

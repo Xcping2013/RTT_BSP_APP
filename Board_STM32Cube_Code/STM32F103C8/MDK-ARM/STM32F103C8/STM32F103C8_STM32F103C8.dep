@@ -100,7 +100,7 @@ I (D:\hardware\ARM_V5\ARM\ARMCC\include\string.h)(0x588B8344)
 I (D:\hardware\ARM_V5\ARM\ARMCC\include\stdarg.h)(0x588B8344)
 I (..\display\TM1638.h)(0x5D089E46)
 I (../Inc/main.h)(0x5D089B34)
-F (../Src/main.c)(0x5D08A32B)(--c99 -c --cpu Cortex-M3 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include -I ..\..\..\bsp_mcu -I ..\display-I.\RTE\_STM32F103C8-ID:\hardware\ARM_V5\ARM\PACK\ARM\CMSIS\5.4.0\CMSIS\Core\Include-ID:\hardware\ARM_V5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include-D__UVISION_VERSION="524" -D_RTE_ -DSTM32F10X_MD -DUSE_HAL_DRIVER -DSTM32F103xB -DUSE_HAL_DRIVER -DSTM32F103xB-o stm32f103c8\main.o --omf_browse stm32f103c8\main.crf --depend stm32f103c8\main.d)
+F (../Src/main.c)(0x5D09FFE2)(--c99 -c --cpu Cortex-M3 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include -I ..\..\..\bsp_mcu -I ..\display-I.\RTE\_STM32F103C8-ID:\hardware\ARM_V5\ARM\PACK\ARM\CMSIS\5.4.0\CMSIS\Core\Include-ID:\hardware\ARM_V5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include-D__UVISION_VERSION="524" -D_RTE_ -DSTM32F10X_MD -DUSE_HAL_DRIVER -DSTM32F103xB -DUSE_HAL_DRIVER -DSTM32F103xB-o stm32f103c8\main.o --omf_browse stm32f103c8\main.crf --depend stm32f103c8\main.d)
 I (../Inc/main.h)(0x5D089B34)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h)(0x5AB8BA27)
 I (../Inc/stm32f1xx_hal_conf.h)(0x5D089B34)
@@ -131,7 +131,7 @@ I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h)(0x5AB8BA27)
 I (../Inc/i2c.h)(0x5D089B30)
 I (../Inc/iwdg.h)(0x5D089B32)
 I (../Inc/spi.h)(0x5D089B32)
-I (../Inc/usart.h)(0x5D089B33)
+I (../Inc/usart.h)(0x5D09FB57)
 I (../Inc/gpio.h)(0x5D089B2F)
 I (D:\hardware\ARM_V5\ARM\ARMCC\include\stdlib.h)(0x588B8344)
 I (D:\hardware\ARM_V5\ARM\ARMCC\include\stddef.h)(0x588B8344)
@@ -253,8 +253,8 @@ I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_iwdg.h)(0x5AB8BA27)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h)(0x5AB8BA27)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h)(0x5AB8BA27)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h)(0x5AB8BA27)
-F (../Src/usart.c)(0x5D089B32)(--c99 -c --cpu Cortex-M3 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include -I ..\..\..\bsp_mcu -I ..\display-I.\RTE\_STM32F103C8-ID:\hardware\ARM_V5\ARM\PACK\ARM\CMSIS\5.4.0\CMSIS\Core\Include-ID:\hardware\ARM_V5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include-D__UVISION_VERSION="524" -D_RTE_ -DSTM32F10X_MD -DUSE_HAL_DRIVER -DSTM32F103xB -DUSE_HAL_DRIVER -DSTM32F103xB-o stm32f103c8\usart.o --omf_browse stm32f103c8\usart.crf --depend stm32f103c8\usart.d)
-I (../Inc/usart.h)(0x5D089B33)
+F (../Src/usart.c)(0x5D09F8A5)(--c99 -c --cpu Cortex-M3 -D__MICROLIB -g -O3 --apcs=interwork --split_sections -I ../Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc -I ../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I ../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I ../Drivers/CMSIS/Include -I ..\..\..\bsp_mcu -I ..\display-I.\RTE\_STM32F103C8-ID:\hardware\ARM_V5\ARM\PACK\ARM\CMSIS\5.4.0\CMSIS\Core\Include-ID:\hardware\ARM_V5\ARM\PACK\Keil\STM32F1xx_DFP\2.3.0\Device\Include-D__UVISION_VERSION="524" -D_RTE_ -DSTM32F10X_MD -DUSE_HAL_DRIVER -DSTM32F103xB -DUSE_HAL_DRIVER -DSTM32F103xB-o stm32f103c8\usart.o --omf_browse stm32f103c8\usart.crf --depend stm32f103c8\usart.d)
+I (../Inc/usart.h)(0x5D09FB57)
 I (../Inc/main.h)(0x5D089B34)
 I (../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h)(0x5AB8BA27)
 I (../Inc/stm32f1xx_hal_conf.h)(0x5D089B34)

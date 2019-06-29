@@ -165,7 +165,10 @@ int32_t spi_init(struct spi_desc **desc,
 	if (param->type) {
 		// Unused variable - fix compiler warning
 	}
-	pinMode(ad7124_cs_pin,PIN_MODE_OUTPUT);
+	pinMode(ad7124_cs_pin,PIN_MODE_OUTPUT);	
+	pinMode(ad7124_sync_pin,PIN_MODE_OUTPUT);
+	//pinMode(ad7124_psw_pin,PIN_MODE_OUTPUT);
+	pinSet(ad7124_sync_pin);
 	pinSet(ad7124_cs_pin);
 	MX_SPI2_Init();
 

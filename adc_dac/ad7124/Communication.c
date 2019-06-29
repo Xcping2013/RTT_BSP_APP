@@ -43,6 +43,9 @@
 /******************************************************************************/
 #include "Communication.h"
 
+//#include "bsp_mcu_softI2c.h"
+
+//IIC_GPIO ad7420_i2c_pin={PB_11,PB_10};	//SCL SDA
 /***************************************************************************//**
  * @brief Initializes the I2C communication peripheral.
  *
@@ -55,6 +58,14 @@
 unsigned char I2C_Init(unsigned long clockFreq)
 {
     /* Add your code here. */
+	switch(clockFreq)
+	{
+		case 1:
+			//SoftI2c_Init(ad7420_i2c_pin);
+			break;
+		default:
+			break;	
+	}
 }
 
 /***************************************************************************//**

@@ -31,6 +31,7 @@
 	  	
 extern uint8_t  USART_RX_BUF[USART_REC_LEN]; 	
 extern uint16_t USART_RX_STA; 
+extern uint8_t cable_rx_ok; 
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart1;

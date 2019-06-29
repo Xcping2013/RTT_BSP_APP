@@ -3,15 +3,6 @@
 
 #if defined(USING_INC_MB1616DEV6) 
 
-typedef struct 
-{
-	IIC_GPIO	pins;
-	uint8_t devAddress;
-	uint8_t in_data;	
-	uint8_t out_data;	
-	
-}pca9539a_t;
-
 pca9539a_t pca9539a_1;
 pca9539a_t pca9539a_2;
 

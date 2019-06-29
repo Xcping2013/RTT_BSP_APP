@@ -23,7 +23,7 @@
 #define	MX_SPI_Init			  MX_SPI2_Init					
 #define	ReadWriteSPI			ReadWriteSPI2		
 
-extern uint8_t homeSensorPin[3];
+//extern uint8_t homeSensorPin[3];
 
 #endif
 

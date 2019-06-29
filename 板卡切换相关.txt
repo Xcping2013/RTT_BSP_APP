@@ -1,0 +1,18 @@
+USING_INC_MB1616DEV6£º	UART2	12MHZ
+USING_INC_MBTMC429:		UART3	8MHZ
+
+
+#include "rtconfig.h"
+
+    #define STM32F103VE
+    #define RT_HSE_VALUE 8000000
+    #define RT_USING_UART1
+
+#define RT_USING_SPI
+
+#include "bsp_include.h"
+
+    //#define USING_INC_MB1616DEV6	
+    #define USING_INC_MBTMC429	
+
+INPUTX	getChInput(X)

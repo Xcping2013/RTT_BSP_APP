@@ -45,7 +45,7 @@ int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver2.2 build at %s %s\n\n", __TIME__, __DATE__);
+	rt_kprintf("\nfirmware ver2.3 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }

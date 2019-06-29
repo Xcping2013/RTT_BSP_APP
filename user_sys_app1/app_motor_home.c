@@ -86,6 +86,8 @@ void setPositionAsOrigin(u8 axisNum)
 						CMD_TRACE("motor auto reset ok\n");
 					}							
 				break;
+			default:
+				break;
 					
 		}
 	}

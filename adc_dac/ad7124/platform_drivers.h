@@ -44,8 +44,10 @@
 #include "app_include.h"
 /******************************************************************************/
 /********************** Macros and Constants Definitions **********************/
-/******************************************************************************/
-#define ad7124_cs_pin	PB_12
+/*******AD芯片只要配置IIC或者SPI相关，再读取数据 （有些需进行相关用户配置）****/
+#define ad7124_cs_pin		PB_12
+#define ad7124_sync_pin	PB_11
+#define ad7124_psw_pin	PD_10
 
 #define	AD7124_TRACE_EN	1
 #ifdef	AD7124_TRACE_EN

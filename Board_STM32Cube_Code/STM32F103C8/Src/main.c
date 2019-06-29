@@ -113,7 +113,7 @@ tickLedstart=HAL_GetTick();
 		TM1638_writeData(display_num[0], SEG_BIT3);
 		TM1638_writeData(display_num[2], SEG_BIT4);
 printf("mcu init ok\r\n");
-printf("if you see this string , the cable is OK\r\n");
+printf("if you see this string , the cable RX is OK\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -124,10 +124,14 @@ printf("if you see this string , the cable is OK\r\n");
 
     /* USER CODE BEGIN 3 */
 		CommandCheckAndExe();
-		if(abs((int)(HAL_GetTick()-tickLedstart))>350)
+		if(abs((int)(HAL_GetTick()-tickLedstart))>800)
 		{
 			HAL_GPIO_TogglePin(SYS_LED_GPIO_Port,SYS_LED_Pin);
 			tickLedstart=HAL_GetTick();
+		if(cable_rx_ok==1)
+		printf("if you see this string 线材通讯OK 调试板的LED需要亮\r\n");
+//			printf("if you see this string , the cable RX is OK...线材接收OK...上位机发送字符串来验证Tx是否OK\r\n");
+			//printf("\r\n");
 		}
   }
   /* USER CODE END 3 */
@@ -191,6 +195,7 @@ void CommandCheckAndExe(void)
 		USART_RX_STA=0;
 	}	
 }
+uint8_t cable_rx_ok=0; 
 uint8_t  ProcessCommand(char  *Commands)
 {
 	//MakeLowercase(Commands);	
@@ -243,10 +248,17 @@ uint8_t  ProcessCommand(char  *Commands)
 		printf("display 0000 via uart\r\n");			
 		return 1;		
 	}		
-
+	else if(strcmp("cable debug",		Commands)==0)								
+	{		
+		cable_rx_ok=1;
+		//printf("if you see this string 线材通讯OK\r\n");
+		return 1;		
+	}	
 	else
 	{
-		return 0;
+		printf("if you see this string 线材通讯OK 调试板的LED需要亮\r\n");
+		return 1;
+		//return 0;
 	}
 }
 /* USER CODE END 4 */

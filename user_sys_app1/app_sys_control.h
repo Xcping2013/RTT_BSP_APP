@@ -125,7 +125,9 @@ enum ProjectId
 	BUTTON_ROAD,
 	OQC_FLEX,
 
-	LIDOPEN
+	LIDOPEN,
+	
+	AOI_2AXIS
 };
 
 UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer);
@@ -143,6 +145,7 @@ extern uint8_t pressureAlarm;
 
 extern uint8_t AxisSpeedIsZeroCnt;
 
+extern uint8_t homeSensorPin[3];
 extern int motorPosition[3];
 extern uint8_t autoRESETmotor;
 extern uint8_t TimerOpened;
