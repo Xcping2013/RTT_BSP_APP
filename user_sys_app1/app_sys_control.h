@@ -71,32 +71,6 @@ extern PARAM_T g_tParam;
 #define REPLY_CMD_LOAD_ERROR 7      //!< error when storing command to EEPROM
 #define REPLY_WRITE_PROTECTED 8     //!< EEPROM is write protected
 #define REPLY_MAX_EXCEEDED 9        //!< maximum number of commands in EEPROM exceeded
-//Data structures needed by the TMCL interpreter
-//! TMCL command
-typedef struct
-{
-  UCHAR Opcode;      //!< command opcode
-  UCHAR Type;        //!< type parameter
-  UCHAR Motor;       //!< motor/bank parameter
-  union
-  {
-    long Int32;      //!< value parameter as 32 bit integer
-    UCHAR Byte[4];   //!< value parameter as 4 bytes
-  } Value;           //!< value parameter
-} TTMCLCommand;
-extern TTMCLCommand ActualCommand;
-//! TMCL reply
-typedef struct
-{
-  UCHAR Status;      //!< status code
-  UCHAR Opcode;      //!< opcode of executed command
-  union
-  {
-    long Int32;      //!< reply value as 32 bit integer
-    UCHAR Byte[4];   //!< reply value as 4 bytes
-  } Value;           //!< value parameter
-} TTMCLReply;
-extern TTMCLReply ActualReply;
 
 /* USER CODE END Private defines */
 //! Motor configuration data
@@ -133,7 +107,6 @@ enum ProjectId
 UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer);
 UCHAR ReadWriteSPI2(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer);
 
-/* USER CODE BEGIN Prototypes */
 void xstrcat(char *str1,char *str2);
 uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength);
 void reboot(void);
@@ -143,26 +116,22 @@ void SaveParamToEeprom(void);
 
 extern uint8_t pressureAlarm;
 
-extern uint8_t AxisSpeedIsZeroCnt;
-
 extern uint8_t homeSensorPin[3];
 extern int motorPosition[3];
-extern uint8_t autoRESETmotor;
-extern uint8_t TimerOpened;
+extern uint8_t motorsReset_InOrder;
+extern uint8_t HardTimer_StartStop;
 
 int ParamSave(int argc, char **argv);
 
 void LoadSettingViaProID(void);
 
-void timer_start(void);
-void timer_stop(void);
+void Start_HardTimer(void);
+void Stop_HardTimer(void);
 
 void MotorAutoReset_preset( void );
 void MotorSensorCheck_timer_init(void);
 void SetAmaxAutoByspeed(u8 axisNum,int speed);
 void get_motor_position(void);
-
-void RampStop(UINT Motor);
 
 /* USER CODE END Prototypes */
 

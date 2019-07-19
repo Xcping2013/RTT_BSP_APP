@@ -124,7 +124,9 @@ struct ad7124_st_reg ad7124_regsR[AD7124_REG_NO] = {
 struct ad7124_st_reg ad7124_regsW[] =
 {
 	{0x00, 0x00,   1, 2}, /* AD7124_Status */
-	{0x01, 0x0140, 2, 1}, /* AD7124_ADC_Control */	//1 0100 0000 REF_EN;POWER_MODE=zhong power  单次读模式
+					//0x0140 mid	0x180 full
+	{0x01, 0x0180, 2, 1}, /* AD7124_ADC_Control */	//1 0100 0000 REF_EN;POWER_MODE=FULL
+//{0x01, 0x0000 | AD7124_ADC_CTRL_REG_POWER_MODE(2) | AD7124_ADC_CTRL_REG_MODE(0) | AD7124_ADC_CTRL_REG_DATA_STATUS | AD7124_ADC_CTRL_REG_REF_EN, 2, 1},	
 	{0x02, 0x0000, 3, 2}, /* AD7124_Data */
 	{0x03, 0x0000, 3, 1}, /* AD7124_IOCon1 */
 	{0x04, 0x0000, 2, 1}, /* AD7124_IOCon2 */
@@ -135,9 +137,9 @@ struct ad7124_st_reg ad7124_regsW[] =
 //	{0x09, 0x8210, 2, 1}, /* AD7124_Channel_0 */ //Enable=1	10000 = temperature senso
 	{0x09, 0x8064, 2, 1}, /* AD7124_Channel_0 */	//1000000001100100	 Enable=1	00011 = AIN3
 	
-	{0x0A, 0x00c7, 2, 1}, /* AD7124_Channel_1 */
-	{0x0B, 0x0022, 2, 1}, /* AD7124_Channel_2 */
-	{0x0C, 0x0001, 2, 1}, /* AD7124_Channel_3 */
+	{0x0A, 0x10c7, 2, 1}, /* AD7124_Channel_1 */	//IN6 IN7
+	{0x0B, 0x2022, 2, 1}, /* AD7124_Channel_2 */
+	{0x0C, 0x30c7, 2, 1}, /* AD7124_Channel_3 */
 	{0x0D, 0x0001, 2, 1}, /* AD7124_Channel_4 */
 	{0x0E, 0x0001, 2, 1}, /* AD7124_Channel_5 */
 	{0x0F, 0x0001, 2, 1}, /* AD7124_Channel_6 */
@@ -152,15 +154,15 @@ struct ad7124_st_reg ad7124_regsW[] =
 	{0x18, 0x0001, 2, 1}, /* AD7124_Channel_15 */
 	
 	{0x19, 0x0070, 2, 1}, /* AD7124_Config_0 */	//111 0000 unipolar  internal reference PGA=1			BSP 
-	{0x1A, 0x0077, 2, 1}, /* AD7124_Config_1 */	//111 0111	unipolar  internal reference PGA=128	BSP 0.38V
+	{0x1A, 0x0074, 2, 1}, /* AD7124_Config_1 */	//111 0111	unipolar  internal reference PGA=128	BSP 0.38V
 	{0x1B, 0x0075, 2, 1}, /* AD7124_Config_2 */	//111 0101	unipolar  internal reference PGA=32   BSP 1.05V
-	{0x1C, 0x0870, 2, 1}, /* AD7124_Config_3 */
+	{0x1C, 0x0077, 2, 1}, /* AD7124_Config_3 */
 	{0x1D, 0x0870, 2, 1}, /* AD7124_Config_4 */
 	{0x1E, 0x0870, 2, 1}, /* AD7124_Config_5 */
 	{0x1F, 0x0870, 2, 1}, /* AD7124_Config_6 */
 	{0x20, 0x0870, 2, 1}, /* AD7124_Config_7 */
 	
-	{0x21, 0x060180, 3, 1}, /* AD7124_Filter_0 */
+	{0x21, 0x060180, 3, 1}, /* AD7124_Filter_0 */	//0x60020
 	{0x22, 0x060180, 3, 1}, /* AD7124_Filter_1 */
 	{0x23, 0x060180, 3, 1}, /* AD7124_Filter_2 */
 	{0x24, 0x060180, 3, 1}, /* AD7124_Filter_3 */
@@ -169,9 +171,15 @@ struct ad7124_st_reg ad7124_regsW[] =
 	{0x27, 0x060180, 3, 1}, /* AD7124_Filter_6 */
 	{0x28, 0x060180, 3, 1}, /* AD7124_Filter_7 */
 	
-	{0x29, 0x800148, 3, 1}, /* AD7124_Offset_0 */
-	//{0x29, 0x800000, 3, 1}, /* AD7124_Offset_0 */
+	//{0x29, 0x800148, 3, 1}, /* AD7124_Offset_0 */
+	
+//SYS CAL
+////ad7124_regs[42]=0x7fb577
+//ad7124_regs[50]=0x697308	
+	
+	{0x29, 0x800000, 3, 1}, /* AD7124_Offset_0 */
 	{0x2A, 0x800000, 3, 1}, /* AD7124_Offset_1 */
+	//{0x2A, 0x7fb577, 3, 1}, /* AD7124_Offset_1 */		
 	{0x2B, 0x800000, 3, 1}, /* AD7124_Offset_2 */
 	{0x2C, 0x800000, 3, 1}, /* AD7124_Offset_3 */
 	{0x2D, 0x800000, 3, 1}, /* AD7124_Offset_4 */
@@ -180,9 +188,10 @@ struct ad7124_st_reg ad7124_regsW[] =
 	{0x30, 0x800000, 3, 1}, /* AD7124_Offset_7 */
 	
 	
-	{0x31, 0x555901, 3, 1}, /* AD7124_Gain_0 */
-	//{0x31, 0x500000, 3, 1}, /* AD7124_Gain_0 */
+	//{0x31, 0x555901, 3, 1}, /* AD7124_Gain_0 */
+	{0x31, 0x500000, 3, 1}, /* AD7124_Gain_0 */
 	{0x32, 0x500000, 3, 1}, /* AD7124_Gain_1 */
+	//{0x32, 0x697308, 3, 1}, /* AD7124_Gain_1 */			
 	{0x33, 0x500000, 3, 1}, /* AD7124_Gain_2 */
 	{0x34, 0x500000, 3, 1}, /* AD7124_Gain_3 */
 	{0x35, 0x500000, 3, 1}, /* AD7124_Gain_4 */
@@ -266,14 +275,43 @@ double AD7124_ReadAverData(struct ad7124_dev *device)
 	double sum=0;
 	int8_t i=0;
 	
-	for(i=0;i<10;i++)
+	for(i=0;i<DMM_CAL_Table.filterTimes;i++)
 	{
 		ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
 
 		sum += AD7124_ReadData(device);
 	}
+	return sum/(DMM_CAL_Table.filterTimes*1.0);
+//	return sum/10.0;
+}
+int32_t AD7124_ReadADAverValue(struct ad7124_dev *device)
+{
+	int8_t i=0;
 	
-	return sum/10.0;
+	struct ad7124_st_reg *regs;
+	int32_t sum =0;
+
+	if(!device)
+		return INVALID_VAL;
+
+	regs = device->regs;
+	
+	for(i=0;i<DMM_CAL_Table.filterTimes;i++)
+	{
+		ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
+		
+		ad7124_read_register(device, &regs[AD7124_Data]);
+
+	/* Get the read result */
+		sum += regs[AD7124_Data].value;
+
+//		AD7124_TRACE("regs[AD7124_Data].value=%d\n",sum);
+	}
+	return sum/(DMM_CAL_Table.filterTimes);
+}
+double AD7124_AdValueToVotage(int32_t ADvalue)
+{
+	return  (ADvalue*2500000.0)/16777216 ;
 }
 void ad7124_readData(void)
 {
@@ -285,10 +323,10 @@ void ad7124_readData(void)
     ret = ad7124_read_data(ad7124_handler, &sample);
 		AD7124_TRACE("ad7124 read AD =%d\n",sample);
 		double voltage;
-		uint8_t voltageStr[10];
+		uint8_t voltageStr[32];
 		voltage=AD7124_ReadAverData(ad7124_handler);
 		//AD7124_TRACE("voltageD=%f uV\n",voltage);
-		sprintf(voltageStr,"%lf",voltage);							
+		sprintf(voltageStr,"%.6lf",voltage);							
 		AD7124_TRACE("ad7124 read voltage=%s uV\n",voltageStr);		//RTT prinf float
 		if (ret < 0)
     {
@@ -311,9 +349,24 @@ void AD7124_ReadVoltage(void)
 void ad7124_init(void)
 {
     /* Initialize AD7124 device. */
+
 		Cal_IdentifyRam();
+		Reg_IdentifyRam();
 		//Cal_FlashToRam();
-    ret = ad7124_setup(&my_ad7124);
+    
+	  if(at24cxx.readU8(at24c256,54*64)!='c')
+		{
+			at24cxx.writeU8(at24c256,54*64,'c');
+			DMM_CAL_KCTable_RamToEeprom();
+			AD7124_CALIBRATION_RamToEeprom();
+			AD7124_TRACE("first time save data to eeprom\n");
+			
+		}
+		DMM_CAL_KCTable_EepromToRam();
+		AD7124_CALIBRATION_EepromToRam();
+	
+		ret = ad7124_setup(&my_ad7124);
+		
 	  delay_ms(100);
     if (ret < 0)
     {
@@ -324,40 +377,21 @@ void ad7124_init(void)
     {
         /* AD7124 initialization OK */
     } 
-    /* Read all registers */
-    for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
-    {
-        ret = ad7124_read_register(ad7124_handler, &ad7124_regsR[regNr]);
-			  AD7124_TRACE("ad7124_regs[%d]=0x%x\n",regNr,ad7124_regsR[regNr].value);
-    }
-    /* Read data from the ADC */
-    ret = ad7124_wait_for_conv_ready(ad7124_handler, timeout);
-    if (ret < 0)
-    {
-			AD7124_TRACE("ad7124 conv err,ret=%d\n",ret);
-	/* Something went wrong, check the value of ret! */
-    }
-    ret = ad7124_read_data(ad7124_handler, &sample);
-		AD7124_TRACE("sample=%d\n",sample);
-    if (ret < 0)
-    {
-			AD7124_TRACE("ad7124_read_data_err,ret=%d\n",ret);
-        /* Something went wrong, check the value of ret! */
-    }
 }
-//
+//为了电阻的精度考虑,读取2次数据取平均,采样命令需要间隔0.1S
+//电流精度OK可以增加SPS
 int ad7124(int argc, char **argv)
 {
 	int result = RT_ERROR;
 
 	if (argc == 2 )
 	{
-		if (!strcmp(argv[1], "init"))
+		if (!strcmp(argv[1], "initAD"))
 		{
 			ad7124_init();
 			return RT_EOK	; 				
 		}
-		else	if (!strcmp(argv[1], "readRegs"))
+		else	if (!strcmp(argv[1], "readADRegs"))
 		{
 			for (regNr = AD7124_Status; (regNr < AD7124_REG_NO) && !(ret < 0); regNr++)
 			{
@@ -366,92 +400,78 @@ int ad7124(int argc, char **argv)
 			}
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "readData"))
+		else	if (!strcmp(argv[1], "readADData"))
 		{
 			ad7124_readData();
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCV_100mV"))	
+		else	if (!strcmp(argv[1], "DCV_100mV"))	
 		{
 			print_dmm_value(DMM_FUNC_DCV_100mV);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCV_1V"))	
+		else	if (!strcmp(argv[1], "DCV_1V"))	
 		{
 			print_dmm_value(DMM_FUNC_DCV_1V);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCV_10V"))	
+		else	if (!strcmp(argv[1], "DCV_10V"))	
 		{
 			print_dmm_value(DMM_FUNC_DCV_10V);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCV_25V"))	
+		else	if (!strcmp(argv[1], "DCV_25V"))	
 		{
 			print_dmm_value(DMM_FUNC_DCV_25V);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCI_100mA"))	
+		else	if (!strcmp(argv[1], "DCI_100mA"))	
 		{
 			print_dmm_value(DMM_FUNC_DCI_100mA);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_DCI_1A"))	
+		else	if (!strcmp(argv[1], "DCI_1A"))	
 		{
 			print_dmm_value(DMM_FUNC_DCI_1A);
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "DMM_FUNC_OHM_10R_4W"))	
+		else	if (!strcmp(argv[1], "OHM_10R_4W"))	
 		{
 			print_dmm_value(DMM_FUNC_OHM_10R_4W);
 			return RT_EOK	; 
 		}		
-		else	if (!strcmp(argv[1], "DMM_FUNC_OHM_1K_4W"))	
+		else	if (!strcmp(argv[1], "OHM_1K_4W"))	
 		{
 			print_dmm_value(DMM_FUNC_OHM_1K_4W);
 			return RT_EOK	; 
 		}	
-		else	if (!strcmp(argv[1], "DMM_FUNC_OHM_10K_4W"))	
+		else	if (!strcmp(argv[1], "OHM_10K_4W"))	
 		{
 			print_dmm_value(DMM_FUNC_OHM_10K_4W);
 			return RT_EOK	; 
 		}	
-		else	if (!strcmp(argv[1], "SAVE_KC"))	
+		else	if (!strcmp(argv[1], "SaveGainOffset"))	
 		{
-			ad7124_getSetK();
+			DMM_CAL_KCTable_RamToEeprom();
+			rt_kprintf("SaveGainOffset OK\n");
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "dc_cal_ch0_2v5"))
-		{				
-			ad7124_regsW[AD7124_Channel_0].value=0x8064;	//AIN3、AIN4
-			ad7124_regsW[AD7124_Channel_1].value=0x00c7;	//DISABLE
-			ad7124_regsW[AD7124_Channel_2].value=0x0022;	//DISABLE	
-			ad7124_write_register(ad7124_handler,ad7124_regsW[AD7124_Channel_0]);
-			ad7124_write_register(ad7124_handler,ad7124_regsW[AD7124_Channel_1]);
-			ad7124_write_register(ad7124_handler,ad7124_regsW[AD7124_Channel_2]);
-			//100000000	选择Low Power(低功耗)模式。
-			ad7124_regsR[AD7124_ADC_CTRL_REG].value=0x0100;		
-			ad7124_write_register(ad7124_handler,ad7124_regsR[AD7124_ADC_CTRL_REG]);
-			delay_ms(10);
-			//执行内部满量程校准
-			ad7124_regsR[AD7124_ADC_CTRL_REG].value=0x0120;	
-			ad7124_write_register(ad7124_handler,ad7124_regsR[AD7124_ADC_CTRL_REG]);
-			AD7124_TRACE("ok\n");
+		else	if (!strcmp(argv[1], "ReadGainOffset"))	
+		{
+			DMM_CAL_KCTable_EepromToRam();
+			rt_kprintf("ReadGainOffset OK\n");
 			return RT_EOK	; 
 		}
-		else	if (!strcmp(argv[1], "dc_cal_ch0_0v0"))
-		{		
-			//执行内部零电平校准。			
-			ad7124_regsR[AD7124_ADC_CTRL_REG].value=0x011C;		
-			ad7124_write_register(ad7124_handler,ad7124_regsR[AD7124_ADC_CTRL_REG]);
-			delay_ms(10);
-			AD7124_TRACE("ok\n");
-			
-			//100000000	选择Low Power(低功耗)模式。
-			ad7124_regsR[AD7124_ADC_CTRL_REG].value=0x0180;		
-			ad7124_write_register(ad7124_handler,ad7124_regsR[AD7124_ADC_CTRL_REG]);
-			delay_ms(10);
-			
+		else	if (!strcmp(argv[1], "printGainOffset"))	
+		{
+			printGainOffset();
+			return RT_EOK	; 
+		}
+		else	if (!strcmp(argv[1], "IC_CALIBRATE"))	
+		{
+			ad7124_inter_calibration();
+			rt_kprintf("IC_CALIBRATE OK ... Start to reboot mcu...\n");
+			reboot();
 			return RT_EOK	; 
 		}
 		else
@@ -461,13 +481,47 @@ int ad7124(int argc, char **argv)
 	}
 	if (argc == 3 )
 	{
-		if (!strcmp(argv[1], "readReg"))
+		if (!strcmp(argv[1], "readADReg"))
 		{
 			uint8_t regno=atoi(argv[2]);	
 			ad7124_read_register(ad7124_handler,&ad7124_regsR[regno]);
-			AD7124_TRACE("ad7124 read register[%d]=%d\n",regno,ad7124_regsR[regno].value);
+			AD7124_TRACE("ad7124 register[%d]=%d\n",regno,ad7124_regsR[regno].value);
 			return RT_EOK	; 				
 		}
+		if (!strcmp(argv[1], "SetFilterTimes"))
+		{
+			DMM_CAL_Table.filterTimes=atoi(argv[2]);
+			rt_kprintf("SetFilterTimes=%d OK\n",DMM_CAL_Table.filterTimes);
+			return RT_EOK	; 
+		}		
+		else	if (!strcmp(argv[1], "CAL_DCV"))	
+		{
+			ADCChannelConvert(DMM_FUNC_DCV_10V);
+			double inputValue= atoi(argv[2])*1000;	
+			double getValue=AD7124_ReadAverData(ad7124_handler);
+			if(inputValue==0)		CTable[DMM_FUNC_DCV_10V]=getValue;
+			else if( getValue!=0)								KTable[DMM_FUNC_DCV_10V]=inputValue/getValue;
+			return RT_EOK	; 
+		}
+		else	if (!strcmp(argv[1], "CAL_DCI"))	
+		{
+			ADCChannelConvert(DMM_FUNC_DCI_1A);
+			double inputValue= atoi(argv[2])*1000;	
+			double getValue=AD7124_ReadAverData(ad7124_handler);
+			if(inputValue==0)			CTable[DMM_FUNC_DCI_1A]=getValue;//*15/100;
+			else if( getValue!=0)	KTable[DMM_FUNC_DCI_1A]=inputValue/getValue;//(inputValue*15)/(getValue*100);
+			return RT_EOK	; 
+		}
+		else	if (!strcmp(argv[1], "CAL_OHM"))	
+		{
+			ADCChannelConvert(DMM_FUNC_OHM_10R_4W);
+			double inputValue= atoi(argv[2])*1000;	
+			double getValue=AD7124_ReadAverData(ad7124_handler);
+			if(inputValue==0)			CTable[DMM_FUNC_OHM_10R_4W]=getValue;
+			else if( getValue!=0)	KTable[DMM_FUNC_OHM_10R_4W]=inputValue/getValue;
+			return RT_EOK	; 
+		}
+
 		else
 		{		
 			result =RT_ERROR;
@@ -475,52 +529,215 @@ int ad7124(int argc, char **argv)
 	}
 	if (argc == 4 )
 	{
-		if (!strcmp(argv[1], "writeReg"))
+		if (!strcmp(argv[1], "writeADReg"))
 		{
 			uint8_t regno=atoi(argv[2]);
 			ad7124_regsW[regno].value=atoi(argv[3]);
 			ad7124_write_register(ad7124_handler,ad7124_regsW[regno]);
-			AD7124_TRACE("ad7124_write_register[%d]=%d\n",regno,ad7124_regsW[regno].value);
+			AD7124_TRACE("ad7124 write register[%d]=%d OK\n",regno,ad7124_regsW[regno].value);
 			return RT_EOK	; 				
 		}
+		if (!strcmp(argv[1], "SYS_CAL"))
+		{
+			if (!strcmp(argv[2], "ZERO"))
+			{
+				if (!strcmp(argv[3], "DCV_10V"))
+				{
+					AD7124_SYS_CALIBRATION(0,DMM_FUNC_DCV_10V);		
+					rt_kprintf("DMM SYS_CAL ZERO DCV_10V OK\n");					
+				}
+				if (!strcmp(argv[3], "DCI_1A"))
+				{
+					AD7124_SYS_CALIBRATION(0,DMM_FUNC_DCI_1A);			
+					rt_kprintf("DMM SYS_CAL ZERO DCI_1A OK\n");							
+				}
+				if (!strcmp(argv[3], "DCI_100mA"))
+				{
+					AD7124_SYS_CALIBRATION(0,DMM_FUNC_DCI_100mA);			
+					rt_kprintf("DMM SYS_CAL ZERO DCI_100mA OK\n");							
+				}
+				if (!strcmp(argv[3], "OHM_10R_4W"))
+				{
+					AD7124_SYS_CALIBRATION(0,DMM_FUNC_OHM_10R_4W);		
+					rt_kprintf("DMM SYS_CAL ZERO OHM_10R_4W OK\n");	
+				}
+				return RT_EOK	;
+			}
+			if (!strcmp(argv[2], "FULL"))
+			{
+				if (!strcmp(argv[3], "DCV_10V"))
+				{
+					AD7124_SYS_CALIBRATION(1,DMM_FUNC_DCV_10V);		
+					rt_kprintf("DMM SYS_CAL FULL DCV_10V OK\n");	
+					
+				}
+				if (!strcmp(argv[3], "DCI_1A"))
+				{
+					AD7124_SYS_CALIBRATION(1,DMM_FUNC_DCI_1A);	
+					rt_kprintf("DMM SYS_CAL FULL DCI_1A OK\n");						
+				}
+				if (!strcmp(argv[3], "DCI_100mA"))
+				{
+					AD7124_SYS_CALIBRATION(1,DMM_FUNC_DCI_100mA);			
+					rt_kprintf("DMM SYS_CAL FULL DCI_100mA OK\n");							
+				}
+				if (!strcmp(argv[3], "OHM_10R_4W"))
+				{
+					AD7124_SYS_CALIBRATION(1,DMM_FUNC_OHM_10R_4W);
+					rt_kprintf("DMM SYS_CAL FULL OHM_10R_4W OK\n");						
+				}
+				return RT_EOK	;
+			}				
+		}
+		if (!strcmp(argv[1], "INT_CAL"))
+		{
+			if (!strcmp(argv[2], "ZERO"))
+			{
+				if (!strcmp(argv[3], "DCV_10V"))
+				{
+					AD7124_INT_CALIBRATION(0,DMM_FUNC_DCV_10V);		
+					rt_kprintf("DMM INT_CAL ZERO DCV_10V OK\n");					
+				}
+				if (!strcmp(argv[3], "DCI_1A"))
+				{
+					AD7124_INT_CALIBRATION(0,DMM_FUNC_DCI_1A);			
+					rt_kprintf("DMM INT_CAL ZERO DCI_1A OK\n");							
+				}
+				if (!strcmp(argv[3], "DCI_100mA"))
+				{
+					AD7124_INT_CALIBRATION(0,DMM_FUNC_DCI_100mA);			
+					rt_kprintf("DMM INT_CAL ZERO DCI_100mA OK\n");							
+				}
+				if (!strcmp(argv[3], "OHM_10R_4W"))
+				{
+					AD7124_INT_CALIBRATION(0,DMM_FUNC_OHM_10R_4W);		
+					rt_kprintf("DMM INT_CAL ZERO OHM_10R_4W OK\n");	
+				}
+				return RT_EOK	;
+			}
+			if (!strcmp(argv[2], "FULL"))
+			{
+				if (!strcmp(argv[3], "DCV_10V"))
+				{
+					AD7124_INT_CALIBRATION(1,DMM_FUNC_DCV_10V);		
+					rt_kprintf("DMM INT_CAL FULL DCV_10V OK\n");	
+					
+				}
+				if (!strcmp(argv[3], "DCI_1A"))
+				{
+					AD7124_INT_CALIBRATION(1,DMM_FUNC_DCI_1A);	
+					rt_kprintf("DMM INT_CAL FULL DCI_1A OK\n");						
+				}
+				if (!strcmp(argv[3], "DCI_100mA"))
+				{
+					AD7124_INT_CALIBRATION(1,DMM_FUNC_DCI_100mA);	
+					rt_kprintf("DMM INT_CAL FULL DCI_100mA OK\n");						
+				}
+				if (!strcmp(argv[3], "OHM_10R_4W"))
+				{
+					AD7124_INT_CALIBRATION(1,DMM_FUNC_OHM_10R_4W);
+					rt_kprintf("DMM INT_CAL FULL OHM_10R_4W OK\n");						
+				}
+				return RT_EOK	;
+			}				
+		}
+				
 		else
 		{		
 			result =RT_ERROR;
 		}   
 	}
+	
+	if (argc == 5 )
+	{
+		if (!strcmp(argv[1], "SetGain"))
+		{	
+			int Type=DMM_FUNC_UNKNOW;
+			
+			if (!strcmp(argv[3], "DCV_10V"))	 	Type=DMM_FUNC_DCV_10V;
+			if (!strcmp(argv[3], "DCI_100mA")) 	Type=DMM_FUNC_DCI_100mA;
+			if (!strcmp(argv[3], "DCI_1A")) 	  Type=DMM_FUNC_DCI_1A;
+			if (!strcmp(argv[3], "OHM_10R_4W")) Type=DMM_FUNC_OHM_10R_4W;
+			
+			if(Type!=DMM_FUNC_UNKNOW)					
+			{
+				if (!strcmp(argv[2], "BySignal"))	SetGainViaInputSignal(Type,atoi(argv[4]));
+				if (!strcmp(argv[2], "ByType"))	  
+				{
+					KTable[Type]=atof(argv[4]);	
+					//DMM_CAL_KCTable_RamToEeprom();
+				}
+				rt_kprintf("DMM SetGain OK\n");
+			}
+			return RT_EOK	;	
+		}
+		if (!strcmp(argv[1], "SetOffset"))
+		{	
+			int Type=DMM_FUNC_UNKNOW;
+			
+			if (!strcmp(argv[3], "DCV_10V"))	 	Type=DMM_FUNC_DCV_10V;
+			if (!strcmp(argv[3], "DCI_100mA")) 	Type=DMM_FUNC_DCI_100mA;
+			if (!strcmp(argv[3], "DCI_1A")) 	  Type=DMM_FUNC_DCI_1A;
+			if (!strcmp(argv[3], "OHM_10R_4W")) Type=DMM_FUNC_OHM_10R_4W;
+			
+			if(Type!=DMM_FUNC_UNKNOW)					
+			{
+				if (!strcmp(argv[2], "BySignal"))	SetOffsetViaInputSignal(Type,atoi(argv[4]));
+				if (!strcmp(argv[2], "ByType"))	  
+				{
+					CTable[Type]=atof(argv[4]);	
+					//DMM_CAL_KCTable_RamToEeprom();
+				}
+				rt_kprintf("DMM SetGain OK\n");
+			}
+			return RT_EOK	;	
+		}
+	}
 	else if( result == RT_ERROR )
 	{
 		rt_kprintf("Usage: \n");
-		rt_kprintf("ad7124 init                     \t-	setup ad7124\n");	
-		rt_kprintf("ad7124 readRegs                 \t- read all register\n");			
-		rt_kprintf("ad7124 readData                 \t-	read current data\n");	
 		
-		rt_kprintf("ad7124 readReg <regNum>         \t-	read the register\n");			
-		rt_kprintf("ad7124 writeReg <regNum> <value>\t	-	write the register\n");	
-		//1:10 or 1:1
-		rt_kprintf("ad7124 dc_ch0_100mv             \t-	measure voltage within 100mv\n");		//0.1x16=1.6v
-		rt_kprintf("ad7124 dc_ch0_1v                \t-	measure voltage within 1v\n");			//1x2=2v
-		rt_kprintf("ad7124 dc_ch0_10v               \t-	measure voltage within 10v\n");			//10/10*2=2v
-		rt_kprintf("ad7124 dc_ch0_25v               \t-	measure voltage within 25v\n");			//25/10*1=2.5V
-		//多路选择+继电器
-//		rt_kprintf("ad7124 dc_ch1_100uA             \t- measure current within 100uA\n");	//180ohm *0.0001 *128=2.304V
-//		rt_kprintf("ad7124 dc_ch1_1mA               \t- measure current within 1mA\n");		//18ohm *0.001 *128=2.304V
-//		rt_kprintf("ad7124 dc_ch1_10mA              \t- measure current within 10mA\n");	//1.8ohm *0.01 *128=2.304V
-		rt_kprintf("ad7124 dc_ch1_100mA             \t- measure current within 100mA\n");	//0.15ohm *0.1 *128=1.92V
-		rt_kprintf("ad7124 dc_ch1_1A             		\t- measure current within 1A\n");	//0.15ohm *1 *16=2.4V
+//		rt_kprintf("DMM initAD\n");//                    \t-	setup ad7124\n");	
+//		rt_kprintf("DMM readADRegs\n");//                \t- read all register\n");			
+//		rt_kprintf("DMM readADData\n");//                 \t-	read current data\n");	
+//		rt_kprintf("\n");	
+//		rt_kprintf("DMM readADReg <regNum>\n");//         \t-	read the register\n");			
+//		rt_kprintf("DMM writeADReg <regNum> <value>\n");//\t	-	write the register\n");	
+		rt_kprintf("DMM SetFilterTimes\n");//                    \t-	measure voltage with range 10V\n");	
+		rt_kprintf("DMM IC_CALIBRATE\n");//                    \t-	measure voltage with range 10V\n");	IC_CALIBRATE
+		rt_kprintf("DMM DCV_10V\n");//                    \t-	measure voltage with range 10V\n");	
+		rt_kprintf("DMM DCI_1A\n");//                     \t-	measure current with range 1A\n");
+		rt_kprintf("DMM OHM_10R_4W \n");//                \t-	measure resistor with range 10OHM\n");				
+	    rt_kprintf("\n");	
+		rt_kprintf("DMM SaveGainOffset\n");//             \t-	\n");
+		rt_kprintf("DMM ReadGainOffset\n");//             \t-	\n");		
+		rt_kprintf("DMM printGainOffset\n");//            \t-	\n");
+		rt_kprintf("\n");	
+		rt_kprintf("DMM SetGain	BySignal DCV_10V | DCI_100mA | DCI_1A | OHM_10R_4W\n");//   \t-	\n");
+		rt_kprintf("DMM SetOffset	BySignal DCV_10V | DCI_100mA | DCI_1A | OHM_10R_4W\n");//  \t-	\n");
+		rt_kprintf("DMM SetGain	ByType DCV_10V | DCI_100mA | DCI_1A | OHM_10R_4W\n");//   \t-	\n");
+		rt_kprintf("DMM SetOffset	ByType DCV_10V | DCI_100mA | DCI_1A | OHM_10R_4W\n");//  \t-	\n");
 
-		rt_kprintf("ad7124 dc_ch2_10ohm            \t- measure current within 100ohm\n"); //10ohm *0.001 *128=1.28V
-		rt_kprintf("ad7124 dc_ch2_1kohm            \t- measure current within 1kohm\n");  //1000ohm *0.001 *2=2V
-		rt_kprintf("ad7124 dc_ch2_10kohm            \t- measure current within 1kohm\n"); //10kohm *0.0001 *2=2V		
-//		rt_kprintf("ad7124 dc_ch2_50kohm            \t- measure current within 1kohm\n"); //50kohm *0.00005 *1=2V
-		
+//	  rt_kprintf("\n");	
+//		
+//		rt_kprintf("DMM CAL_DCV XXX\n");//             	\t-	input xxx mV to cal\n");
+//		rt_kprintf("DMM CAL_DCI XXX\n");//        	      \t-	input xxx mA to cal\n");
+//		rt_kprintf("DMM CAL_OHM XXX\n");//        	      \t-	input xxx mA to cal\n");
+//		
+//		rt_kprintf("DMM SYS_CAL ZERO|FULL DCV_25V\n");//	  	\t-	\n");
+//		rt_kprintf("DMM SYS_CAL ZERO|FULL DCI_1A\n");//	  	\t-	\n");	
+//		rt_kprintf("DMM SYS_CAL ZERO|FULL OHM_10R_4W\n");//	\t-	\n");
 
+//		rt_kprintf("DMM INT_CAL ZERO|FULL DCV_25V\n");//	  	\t-	\n");
+//		rt_kprintf("DMM INT_CAL ZERO|FULL DCI_1A\n");//	  	\t-	\n");	
+//		rt_kprintf("DMM INT_CAL ZERO|FULL OHM_10R_4W\n");//	\t-	\n");
 	}
 	return result;
 }
 
 
-MSH_CMD_EXPORT(ad7124, ...);
+//MSH_CMD_EXPORT(ad7124, ...);
+MSH_CMD_EXPORT_ALIAS(ad7124,DMM,...);
 
 /* 校准
 int CAL_0(void)

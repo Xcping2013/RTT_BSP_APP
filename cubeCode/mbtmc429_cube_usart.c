@@ -21,7 +21,8 @@
 #include "mbtmc429_cube_usart.h"
 
 /* USER CODE BEGIN 0 */
-
+//HAL_UART_Init <--	HAL_UART_MspInit
+//MX_USART1_UART_Init <--	HAL_UART_MspInit
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;

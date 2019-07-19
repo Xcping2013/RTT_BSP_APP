@@ -63,11 +63,7 @@ uint16_t USART_RX_STA=0;
 	}
 #endif
 	
-#define RX_BUF_LEN 200;
 
-static uint8_t TxBuffer[200]="[batman]";
-static uint8_t RxBuffer[500];
-	
 static void mcu_Delay(u8 x)
 {
 	u16 i;
@@ -98,7 +94,13 @@ void uart_user_app(void)
 	//__HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
 	
 //	MX_USART2_UART_Init();
-//	
+//
+	
+//#define RX_BUF_LEN 200;
+
+//static uint8_t TxBuffer[200]="[batman]";
+//static uint8_t RxBuffer[500];	
+	
 //	memset(RxBuffer,0,RX_BUF_LEN);
 //	HAL_UART_Receive_IT(&huart2, RxBuffer, RX_BUF_LEN);
 //	

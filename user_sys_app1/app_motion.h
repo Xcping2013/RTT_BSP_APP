@@ -5,13 +5,13 @@
 
 void tmc429_hw_init(void);
 
-uint8_t TMCL_MotorRotate(void);
-void RotateRight(uint8_t axisNum , int speed);
-void RotateLeft(uint8_t axisNum , int speed);
-void MotorStop(uint8_t axisNum);
 
-int MotorLimitCheck_thread_init(void);
-int motor(int argc, char **argv);
+uint8_t TMC429_MotorRotate(uint8_t motor_number, int32_t motor_speed);
+uint8_t TMC429_MotorStop(uint8_t motor_number);
+void 		StopMotorByRamp(UINT Motor);
+
+int 		MotorLimitCheck_thread_init(void);
+int 		motor(int argc, char **argv);
 
 
 

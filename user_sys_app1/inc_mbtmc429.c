@@ -1,3 +1,15 @@
+/*			NVIC SET
+
+HAL_NVIC_SetPriority(irqmap->irqno, 4, 0);
+HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
+HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+HAL_NVIC_SetPriority(USART2_IRQn, 6, 0);
+HAL_NVIC_SetPriority(USART3_IRQn, 6, 0);
+HAL_NVIC_SetPriority(TIM1_UP_IRQn, 6, 0);
+
+不要搞太多的全局变量，独立性
+
+*/
 
 #include "bsp_include.h"	
 #include "app_include.h"
@@ -16,6 +28,11 @@
 //MSH_CMD_EXPORT(list_timer, list timer in system);
 //MSH_CMD_EXPORT(list_device, list device in system);
 
+/*
+复位内移除定时器内的delay，调用delay时先停止定时器
+优化回原点动作，回原点的时候，不响应stop命令
+
+*/
 #if defined(USING_INC_MBTMC429) 	//#define RT_USING_UART3
 
 uint8_t LED_PIN=PD_7;
@@ -32,7 +49,7 @@ int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 {		
 	SysRunLed_thread_init();
 	
-	dido_hw_init();					//add in8 as exit
+//	dido_hw_init();					//add in8 as exit
 	at24cxx_hw_init();
 	
 	tmc429_hw_init();
@@ -42,10 +59,13 @@ int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 
 	MX_USART3_UART_Init();
 	uart_stream_thread_init();	
+
+	dido_hw_init();					//add in8 as exit  防止程序未进入系统却开始响应 复位按键命令 从而死机
 	
 	__HAL_AFIO_REMAP_SWJ_NOJTAG();
 	
-	rt_kprintf("\nfirmware ver2.3 build at %s %s\n\n", __TIME__, __DATE__);
+	//rt_show_version
+	//rt_kprintf("\nfirmware ver2.5 build at %s %s\n\n", __TIME__, __DATE__);
 
   return 0;
 }

@@ -5,6 +5,8 @@
 
 #define lenof(a) (sizeof(a)/sizeof((a)[0]))
 
+//#define USING_EX_CURRENT_SOURCE		1
+//OHM_1R_4W		DMM_FUNC_OHM_1R_4W
 //DMM_FUNC_TYPE
 
 enum 
@@ -18,10 +20,17 @@ enum
 
 	DMM_FUNC_DCI_100uA		,	
 	DMM_FUNC_DCI_1mA			,
-	DMM_FUNC_DCI_100mA		,	
+	
+	DMM_FUNC_DCI_100mA		  ,	
+//	DMM_FUNC_DCI_75mA		  ,	
+//	DMM_FUNC_DCI_285mA		,	
+//	DMM_FUNC_OHM_R100_4W	,	
+//	MM_FUNC_OHM_R150_4W	  ,	
+	
 	DMM_FUNC_DCI_1A				,	
- 	
+	
 	DMM_FUNC_OHM_10R_4W		,	
+	
 	DMM_FUNC_OHM_1K_4W		,	
 	DMM_FUNC_OHM_10K_4W		,	
 		
@@ -42,10 +51,24 @@ extern struct ad7124_dev *ad7124_handler;
 void ad7124_init(void);
 double AD7124_ReadAverData(struct ad7124_dev *device);
 
+int32_t AD7124_ReadADAverValue(struct ad7124_dev *device);
+double AD7124_AdValueToVotage(int32_t ADvalue);
+
+
+
 void ad7124_getSetK(void);
-void SetFuncViaADreg( int _Func );
+void ADCChannelConvert( int _Func );
+void AD7124ChannelConfigToReg(void);
 void print_dmm_value( int _Func );
 
+void AD7124_SYS_CALIBRATION( uint8_t mode, int _Func );
+void AD7124_INT_CALIBRATION( uint8_t mode, int _Func );
+
+void Reg_IdentifyRam(void);
+void AD7124_CALIBRATION_RamToEeprom(void);
+void AD7124_CALIBRATION_EepromToRam(void);
+
+void ad7124_inter_calibration(void);
 	
 #endif//__DMM_H__
 

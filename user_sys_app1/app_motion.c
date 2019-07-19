@@ -1,9 +1,3 @@
-//#include "app_motion.h"
-//#include "app_sys_control.h"
-
-#include "bsp_include.h"	
-#include "app_include.h"
-
 /*  TMCL Instruction
 1-ROR rotate right
 2-ROL rotate left
@@ -20,10 +14,15 @@
 13-REF reference search
 14-SIO set output
 15-GIO get input
-
 */
 
+//#include "app_motion.h"
+//#include "app_sys_control.h"
 
+#include "bsp_include.h"	
+#include "app_include.h"
+
+/*********************************************************************************************************************/
 
 enum axisParameter {
 
@@ -67,193 +66,111 @@ Type_none,
 };
 
 //
-TTMCLCommand ActualCommand;
-TTMCLReply ActualReply;
+typedef struct
+{
+  UCHAR Type;        //!< type parameter
+  UCHAR Motor;       //!< motor/bank parameter
+  union
+  {
+    long Int32;      //!< value parameter as 32 bit integer
+    UCHAR Byte[4];   //!< value parameter as 4 bytes
+  } Value;           //!< value parameter
+	
+} TMC429_Command;
+
+TMC429_Command CMDGetFromUart;
+
+typedef struct
+{
+  uint8_t Status;               
+  union
+  {
+    long Int32;      
+    uint8_t Byte[4];   
+  } Value;   
+	
+} TMC429_Parameter;
+
+TMC429_Parameter TMC429_ParameterGet;
+
+TMC429_Parameter TMC429_ParameterSet;
 
 static UCHAR SpeedChangedFlag[N_O_MOTORS];
-static uint8_t MotorStopByLimit[3]={1,1,1};														//碰到限位处理一次
+
+static uint8_t MotorStopByLimit[N_O_MOTORS]={ENABLE,ENABLE,ENABLE};								//碰到限位处理一次
 		
+/*********************************************************************************************************************/
+static void 		TMC429_ParameterPresetToRam(void);
+static uint8_t 	TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, int32_t position);
 
-static void RampInit(void);
-//static uint8_t TMCL_MotorRotate(void);
-static uint8_t TMCL_MotorStop(void);
-static uint8_t TMCL_MoveToPosition(void);
-static void TMCL_GetAxisParameter(void);
-static void TMCL_SetAxisParameter(void);
-static void MotorLimitProcess(uint8_t axisNum);
+static void 		TMC429_GetAxisParameter(uint8_t motor_number, uint8_t parameter_type);
+static void 		TMC429_SetAxisParameter(uint8_t motor_number, uint8_t parameter_type, int32_t parameter_value);
+static void 		MotorKeepStop_removeLimitSigal(uint8_t motor_number);
 
-static void printf_cmd_motor_set(void);
-static void printf_cmd_motor_get(void);
+static void 		printf_cmdList_motor(void);
+static void 		printf_cmdList_motor_set(void);
+static void 		printf_cmdList_motor_get(void);
 
-static void RampInit(void)
+/*********************************************************************************************************************/
+static void TMC429_ParameterPresetToRam(void)
 {
   uint8_t i;
 	for(i=0; i<N_O_MOTORS; i++) 					
 	{																  
-		MotorConfig[i].VMax=g_tParam.tmc429_VMax[i];   				
-		MotorConfig[i].AMax=g_tParam.tmc429_AMax[i];
-		MotorConfig[i].PulseDiv=g_tParam.tmc429_PulseDiv[i];	
-		MotorConfig[i].RampDiv=g_tParam.tmc429_RampDiv[i];	
+		MotorConfig[i].VMax 		= g_tParam.tmc429_VMax[i];   				
+		MotorConfig[i].AMax 		=	g_tParam.tmc429_AMax[i];
+		MotorConfig[i].PulseDiv	=	g_tParam.tmc429_PulseDiv[i];	
+		MotorConfig[i].RampDiv	=	g_tParam.tmc429_RampDiv[i];	
 		
-		SpeedChangedFlag[i]=TRUE;
-		homeInfo.Homed[i]=FALSE;
-		homeInfo.GoHome[i]=FALSE;
-		homeInfo.GoLimit[i]=FALSE;
-		homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];
+		SpeedChangedFlag[i]			=	TRUE;
+		homeInfo.Homed[i]				=	FALSE;
+		homeInfo.GoHome[i]			=	FALSE;
+		homeInfo.GoLimit[i]			=	FALSE;
+		homeInfo.HomeSpeed[i]		=	g_tParam.speed_home[i];
 		
 		pinMode(homeSensorPin[i], PIN_MODE_INPUT_PULLUP);
 	}
 }
 
-void  tmc429_hw_init(void)
-{
-	pinMode(POSCMP1_PIN, PIN_MODE_INPUT_PULLUP);
-  pinMode(INTOUT1_PIN, PIN_MODE_INPUT_PULLUP);	
-	
-	MX_SPI_Init();
-#if defined(USING_INC_MBTMC429) 
-	MX_TIM3_Init();	
-	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
-#endif
-	RampInit();
-	Init429();
-	for(uint8_t i=0;i<3;i++)
-	{
-		HardStop(i);
-		delay_ms(50);
-		Write429Short(IDX_VMAX|(i<<5), 0);	
-		delay_ms(50);
-		Write429Int(IDX_XTARGET|(i<<5), 0);
-		Write429Int(IDX_XACTUAL|(i<<5), 0);
-	}
-}
-
-/***************************************************************//**
-  \fn RotateRight(void)
-  \brief Command ROR (see TMCL manual)
-
-  ROR (ROtate Right) command (see TMCL manual).
-********************************************************************/
-void RotateRight(uint8_t axisNum , int speed)
-{
-	SpeedChangedFlag[axisNum]=TRUE;
-	Set429RampMode(axisNum, RM_VELOCITY);
-	Write429Short(IDX_VMAX|(axisNum<<5), 2047);
-	Write429Short(IDX_VTARGET|(axisNum<<5), speed);
-}
-/***************************************************************//**
-  \fn RotateLeft(void)
-  \brief Command ROL
-
-  ROL (ROtate Left) command (see TMCL manual).
-********************************************************************/
-void RotateLeft(uint8_t axisNum , int speed)
-{
-	SpeedChangedFlag[axisNum]=TRUE;
-	Set429RampMode(axisNum, RM_VELOCITY);
-	Write429Short(IDX_VMAX|(axisNum<<5), 2047);
-	Write429Short(IDX_VTARGET|(axisNum<<5), -speed);
-}
-/***************************************************************//**
-  \fn MotorStop(void)
-  \brief Command MST
-
-  MST (Motor StoP) command (see TMCL manual).
-********************************************************************/
-void MotorStop(uint8_t axisNum)
-{
-//	Set429RampMode(axisNum, RM_VELOCITY);
-//	Write429Zero(IDX_VTARGET|(axisNum<<5));
-
-	HardStop(axisNum);
-	delay_ms(3);
-}
-
-
-//** TMCL Commands **
-/***************************************************************//**
-  \fn RotateRight(void)
-  \brief Command ROR (see TMCL manual)
-********************************************************************/
-uint8_t TMCL_MotorRotate(void)
-{
-  if(ActualCommand.Motor<N_O_MOTORS)
-  {
-		//MotorStopByLimit[ActualCommand.Motor]=1;
-		
-    SpeedChangedFlag[ActualCommand.Motor]=TRUE;
-    Set429RampMode(ActualCommand.Motor, RM_VELOCITY);
-    Write429Short(IDX_VMAX|(ActualCommand.Motor<<5), 2047);
-    Write429Short(IDX_VTARGET|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-		//rt_kprintf("motor%d is rotate at %d\n",ActualCommand.Motor,ActualCommand.Value.Int32);
-		return 0;	
-  }
-	return 1;
-}
-/***************************************************************//**
-  \fn MotorStop(void)
-  \brief Command MST
-
-  MST (Motor StoP) command (see TMCL manual).
-********************************************************************/
-static uint8_t TMCL_MotorStop(void)
-{
-  if(ActualCommand.Motor<N_O_MOTORS)
-  {
-		
-//    Set429RampMode(ActualCommand.Motor, RM_VELOCITY);
-//    Write429Zero(IDX_VTARGET|(ActualCommand.Motor<<5));
-		
-		HardStop(ActualCommand.Motor);
-		delay_ms(3);
-		homeInfo.GoHome[ActualCommand.Motor]=0;
-		homeInfo.GoLimit[ActualCommand.Motor]=0;
-		rt_kprintf("motor[%d] is stop and P[%d]=%d\n",ActualCommand.Motor,ActualCommand.Motor,Read429Int(IDX_XACTUAL|(ActualCommand.Motor<<5)));
-		return 0;
-  }
-	return 1;
-}
 /***************************************************************//**
   \fn MoveToPosition(void)
   \brief Command MVP
 
   MVP (Move To Position) command (see TMCL manual).
 ********************************************************************/
-static uint8_t TMCL_MoveToPosition(void)
+static uint8_t TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, int32_t position)
 {
-  if(ActualCommand.Motor<N_O_MOTORS)
+  if(motor_number<N_O_MOTORS)
   {
-    if(ActualCommand.Type==MVP_ABS || ActualCommand.Type==MVP_REL)
+    if(motion_mode==MVP_ABS || motion_mode==MVP_REL)
     {
-			//MotorStopByLimit[ActualCommand.Motor]=1;
+			//MotorStopByLimit[motor_number]=1;
 			
-      if(SpeedChangedFlag[ActualCommand.Motor])
+      if(SpeedChangedFlag[motor_number])
       {
-        Write429Short(IDX_VMAX|(ActualCommand.Motor<<5), MotorConfig[ActualCommand.Motor].VMax);
-				SetAmaxAutoByspeed(ActualCommand.Motor,MotorConfig[ActualCommand.Motor].VMax);
-        //SetAMax(ActualCommand.Motor, MotorConfig[ActualCommand.Motor].AMax);
-        SpeedChangedFlag[ActualCommand.Motor]=FALSE;
+        Write429Short(IDX_VMAX|(motor_number<<5), MotorConfig[motor_number].VMax);
+				SetAmaxAutoByspeed(motor_number,MotorConfig[motor_number].VMax);
+        SpeedChangedFlag[motor_number]=FALSE;
       }
-      if(ActualCommand.Type==MVP_ABS)
+      if(motion_mode==MVP_ABS)
 			{
-				CMD_TRACE("motor[%d] is start to make absolute motion\n",ActualCommand.Motor);
-        Write429Int(IDX_XTARGET|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
+				CMD_TRACE("motor[%d] is start to make absolute motion\n",motor_number);
+        Write429Int(IDX_XTARGET|(motor_number<<5), position);
 			}
       else
 			{
-				CMD_TRACE("motor[%d] is start to make relative motion\n",ActualCommand.Motor);
-        Write429Int(IDX_XTARGET|(ActualCommand.Motor<<5), ActualCommand.Value.Int32+Read429Int(IDX_XACTUAL|(ActualCommand.Motor<<5)));
+				CMD_TRACE("motor[%d] is start to make relative motion\n",motor_number);
+        Write429Int(IDX_XTARGET|(motor_number<<5), position + Read429Int(IDX_XACTUAL|(motor_number<<5)));
 			}
-      Set429RampMode(ActualCommand.Motor, RM_RAMP);
+      Set429RampMode(motor_number, RM_RAMP);
 			return 0;
     }
     else 
 		{
-			ActualReply.Status=REPLY_WRONG_TYPE;
 			return 1;
 		}
   }
-  else ActualReply.Status=REPLY_INVALID_VALUE;
+  else TMC429_ParameterGet.Status=REPLY_INVALID_VALUE;
 	return 1;
 }
 
@@ -265,68 +182,72 @@ static uint8_t TMCL_MoveToPosition(void)
 
   GAP (Get Axis Parameter) command (see TMCL manual).
 ********************************************************************/
-static void TMCL_GetAxisParameter(void)
+static void TMC429_GetAxisParameter(uint8_t motor_number, uint8_t parameter_type)
 {
-  if(ActualCommand.Motor<N_O_MOTORS)
+		
+  TMC429_ParameterGet.Value.Int32=0;
+	
+  if(motor_number < N_O_MOTORS)	
   {
-    ActualReply.Value.Int32=0;
-    switch(ActualCommand.Type)
+
+		
+    switch(parameter_type)
     {
       case next_position:
-        ActualReply.Value.Int32=Read429Int(IDX_XTARGET|(ActualCommand.Motor<<5));				
-				CMD_TRACE("motor[%d] next position=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Int(IDX_XTARGET|(motor_number<<5));				
+				CMD_TRACE("motor[%d] next position=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
 				break;
 
       case actual_position:
-        ActualReply.Value.Int32=Read429Int(IDX_XACTUAL|(ActualCommand.Motor<<5));
-				CMD_TRACE("motor[%d] actual position=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Int(IDX_XACTUAL|(motor_number<<5));
+				CMD_TRACE("motor[%d] actual position=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case next_speed:
-        ActualReply.Value.Int32=Read429Short(IDX_VTARGET|(ActualCommand.Motor<<5));
-			  CMD_TRACE("motor[%d] next speed=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Short(IDX_VTARGET|(motor_number<<5));
+			  CMD_TRACE("motor[%d] next speed=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case actual_speed:
-        ActualReply.Value.Int32=Read429Short(IDX_VACTUAL|(ActualCommand.Motor<<5));
-			  CMD_TRACE("motor[%d] actual speed=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Short(IDX_VACTUAL|(motor_number<<5));
+			  CMD_TRACE("motor[%d] actual speed=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case max_v_positioning:
-        ActualReply.Value.Int32=MotorConfig[ActualCommand.Motor].VMax;
-			  CMD_TRACE("motor[%d] max positioning speed=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=MotorConfig[motor_number].VMax;
+			  CMD_TRACE("motor[%d] max positioning speed=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case max_acc:
-        ActualReply.Value.Int32=MotorConfig[ActualCommand.Motor].AMax;
-			  CMD_TRACE("motor[%d] max acceleration=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=MotorConfig[motor_number].AMax;
+			  CMD_TRACE("motor[%d] max acceleration=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case max_current:
-        //ActualReply.Value.Int32=MotorConfig[ActualCommand.Motor].IRun;
-				CMD_TRACE("motor[%d] max current=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        //TMC429_ParameterGet.Value.Int32=MotorConfig[motor_number].IRun;
+				CMD_TRACE("motor[%d] max current=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case standby_current:
-        //ActualReply.Value.Int32=MotorConfig[ActualCommand.Motor].IStandby;
-				CMD_TRACE("motor[%d] standby current=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        //TMC429_ParameterGet.Value.Int32=MotorConfig[motor_number].IStandby;
+				CMD_TRACE("motor[%d] standby current=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case position_reached:
-//        if(Read429Status() & 0x01) ActualReply.Value.Byte[0]=1;
-//				CMD_TRACE("motor[%d] position reached=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+//        if(Read429Status() & 0x01) TMC429_ParameterGet.Value.Byte[0]=1;
+//				CMD_TRACE("motor[%d] position reached=%d\n",motor_number,TMC429_ParameterGet.Value.Byte[0]);
 			
-				CMD_TRACE("motor[%d] position reached=%d\n",ActualCommand.Motor,(Read429Status() & (0x01<<ActualCommand.Motor*2)) ? 1:0);
+				CMD_TRACE("motor[%d] position reached=%d\n",motor_number,(Read429Status() & (0x01<<motor_number*2)) ? 1:0);
         break;
 
       case leftLimit_SwS:
-        ActualReply.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x02<<ActualCommand.Motor*2)) ? 1:0;
-			  CMD_TRACE("motor[%d] left limit switch status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x02<<motor_number*2)) ? 1:0;
+			  CMD_TRACE("motor[%d] left limit switch status=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case rightLimit_SwS:
-        ActualReply.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x01<<ActualCommand.Motor*2)) ? 1:0;
-			  CMD_TRACE("motor[%d] right limit switch status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=(Read429SingleByte(IDX_REF_SWITCHES, 3) & (0x01<<motor_number*2)) ? 1:0;
+			  CMD_TRACE("motor[%d] right limit switch status=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 			
       case allLimit_SwS:
@@ -343,204 +264,206 @@ static void TMCL_GetAxisParameter(void)
         break;
 
       case rightLimit_disable:
-        ActualReply.Value.Byte[0]=(Read429SingleByte(IDX_REFCONF_RM|(ActualCommand.Motor<<5), 2) & 0x02) ? 1:0;
-			  CMD_TRACE("motor[%d] right limit switch disable=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+        TMC429_ParameterGet.Value.Byte[0]=(Read429SingleByte(IDX_REFCONF_RM|(motor_number<<5), 2) & 0x02) ? 1:0;
+			  CMD_TRACE("motor[%d] right limit switch disable=%d\n",motor_number,TMC429_ParameterGet.Value.Byte[0]);
 				break;
 
       case leftLimit_disable:
-        ActualReply.Value.Byte[0]=(Read429SingleByte(IDX_REFCONF_RM|(ActualCommand.Motor<<5), 2) & 0x01) ? 1:0;
-				CMD_TRACE("motor[%d] left limit switch disable=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+        TMC429_ParameterGet.Value.Byte[0]=(Read429SingleByte(IDX_REFCONF_RM|(motor_number<<5), 2) & 0x01) ? 1:0;
+				CMD_TRACE("motor[%d] left limit switch disable=%d\n",motor_number,TMC429_ParameterGet.Value.Byte[0]);
         break;
 
       case min_speed:
-        ActualReply.Value.Int32=Read429Short(IDX_VMIN|(ActualCommand.Motor<<5));
-				CMD_TRACE("motor[%d] minimum speed=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Short(IDX_VMIN|(motor_number<<5));
+				CMD_TRACE("motor[%d] minimum speed=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case ramp_mode:
-        ActualReply.Value.Byte[0]=Read429SingleByte(IDX_REFCONF_RM|(ActualCommand.Motor<<5), 3);
-			  CMD_TRACE("motor[%d] ramp mode=%d\n",ActualCommand.Motor,ActualReply.Value.Byte[0]);
+        TMC429_ParameterGet.Value.Byte[0]=Read429SingleByte(IDX_REFCONF_RM|(motor_number<<5), 3);
+			  CMD_TRACE("motor[%d] ramp mode=%d\n",motor_number,TMC429_ParameterGet.Value.Byte[0]);
         break;
 
       case ref_sw_tolerance:
-        ActualReply.Value.Int32=Read429Short(MOTOR_NUMBER(ActualCommand.Motor)<<5|IDX_DX_REFTOLERANCE);
-				CMD_TRACE("motor[%d] ref switch tolerance=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=Read429Short(MOTOR_NUMBER(motor_number)<<5|IDX_DX_REFTOLERANCE);
+				CMD_TRACE("motor[%d] ref switch tolerance=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case softStop_flag:
-        ActualReply.Value.Int32=(Read429SingleByte(IDX_REFCONF_RM|MOTOR_NUMBER(ActualCommand.Motor)<<5, 0) & 0x04) ? 1:0;
-				CMD_TRACE("motor[%d] soft stop status=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Int32=(Read429SingleByte(IDX_REFCONF_RM|MOTOR_NUMBER(motor_number)<<5, 0) & 0x04) ? 1:0;
+				CMD_TRACE("motor[%d] soft stop status=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
 			  break;
 
       case ramp_divisor:
-        ActualReply.Value.Byte[0]=Read429SingleByte(IDX_PULSEDIV_RAMPDIV|(ActualCommand.Motor<<5), 2) & 0x0f;
-		  	CMD_TRACE("motor[%d] ramp divisor=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Byte[0]=Read429SingleByte(IDX_PULSEDIV_RAMPDIV|(motor_number<<5), 2) & 0x0f;
+		  	CMD_TRACE("motor[%d] ramp divisor=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
       case pulse_divisor:
-        ActualReply.Value.Byte[0]=Read429SingleByte(IDX_PULSEDIV_RAMPDIV|(ActualCommand.Motor<<5), 2) >> 4;
-				CMD_TRACE("motor[%d] pulse divisor=%d\n",ActualCommand.Motor,ActualReply.Value.Int32);
+        TMC429_ParameterGet.Value.Byte[0]=Read429SingleByte(IDX_PULSEDIV_RAMPDIV|(motor_number<<5), 2) >> 4;
+				CMD_TRACE("motor[%d] pulse divisor=%d\n",motor_number,TMC429_ParameterGet.Value.Int32);
         break;
 
 			case is_homed:
-				CMD_TRACE("motor[%d] homed=%d\n",ActualCommand.Motor,homeInfo.Homed[ActualCommand.Motor]);
+				CMD_TRACE("motor[%d] homed=%d\n",motor_number,homeInfo.Homed[motor_number]);
 				break;
 			case is_stop:
-				CMD_TRACE("motor[%d] stop=%d\n",ActualCommand.Motor,Read429Short(IDX_VACTUAL|(ActualCommand.Motor<<5))? 0:1) ;
+				CMD_TRACE("motor[%d] stop=%d\n",motor_number,Read429Short(IDX_VACTUAL|(motor_number<<5))? 0:1) ;
 				break;
 			case is_reach:
 
-				CMD_TRACE("motor[%d] reach=%d\n",ActualCommand.Motor,(Read429Status() & (0x01<<ActualCommand.Motor*2)) ? 1:0);
+				CMD_TRACE("motor[%d] reach=%d\n",motor_number,(Read429Status() & (0x01<<motor_number*2)) ? 1:0);
 
 				break;
 			case home_SenS:
-				CMD_TRACE("motor[%d] homeSensor=%d\n",ActualCommand.Motor, rt_pin_read(homeSensorPin[ActualCommand.Motor]) ? 0:1) ;
+				CMD_TRACE("motor[%d] homeSensor=%d\n",motor_number, rt_pin_read(homeSensorPin[motor_number]) ? 0:1) ;
 				break;						
       default:
-        ActualReply.Status=REPLY_WRONG_TYPE;
+        TMC429_ParameterGet.Status=REPLY_WRONG_TYPE;
         break;
     }
-  } else ActualReply.Status=REPLY_INVALID_VALUE;
+  } else TMC429_ParameterGet.Status=REPLY_INVALID_VALUE;
 }
 
 
 
-static void TMCL_SetAxisParameter(void)
+static void TMC429_SetAxisParameter(uint8_t motor_number, uint8_t parameter_type, int32_t parameter_value)
 {
   UCHAR Read[4], Write[4];
-  if(ActualCommand.Motor<N_O_MOTORS)
+  if(motor_number < N_O_MOTORS)
   {
-    switch(ActualCommand.Type)
+		TMC429_ParameterSet.Value.Int32=parameter_value;
+		
+    switch(parameter_type)
     {
       case next_position:
-        Write429Int(IDX_XTARGET|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] next position=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Int(IDX_XTARGET|(motor_number<<5), TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] next position=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case actual_position:
-        Write429Int(IDX_XACTUAL|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] actual position=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Int(IDX_XACTUAL|(motor_number<<5), TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] actual position=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case next_speed:
-        Write429Short(IDX_VTARGET|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] next speed=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Short(IDX_VTARGET|(motor_number<<5), TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] next speed=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case actual_speed:
-        Write429Short(IDX_VACTUAL|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] actual speed=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);		
+        Write429Short(IDX_VACTUAL|(motor_number<<5), TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] actual speed=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);		
         break;
 
       case max_v_positioning:
-        MotorConfig[ActualCommand.Motor].VMax=ActualCommand.Value.Int32;
-        Write429Short(IDX_VMAX|(ActualCommand.Motor<<5), MotorConfig[ActualCommand.Motor].VMax);
-				SetAmaxAutoByspeed(ActualCommand.Motor,MotorConfig[ActualCommand.Motor].VMax);
-				CMD_TRACE("set motor[%d] speed=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);		
+        MotorConfig[motor_number].VMax=TMC429_ParameterSet.Value.Int32;
+        Write429Short(IDX_VMAX|(motor_number<<5), MotorConfig[motor_number].VMax);
+				SetAmaxAutoByspeed(motor_number,MotorConfig[motor_number].VMax);
+				CMD_TRACE("set motor[%d] speed=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);		
         break;
 
       case max_acc:
-        MotorConfig[ActualCommand.Motor].AMax=ActualCommand.Value.Int32;
-        SetAMax(ActualCommand.Motor, MotorConfig[ActualCommand.Motor].AMax);
-				CMD_TRACE("set motor[%d] max acceleration speed=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);		
+        MotorConfig[motor_number].AMax=TMC429_ParameterSet.Value.Int32;
+        SetAMax(motor_number, MotorConfig[motor_number].AMax);
+				CMD_TRACE("set motor[%d] max acceleration speed=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);		
         break;
 
       case rightLimit_disable:	//12
-        Write[0]=IDX_REFCONF_RM|TMC429_READ|(ActualCommand.Motor<<5);
+        Write[0]=IDX_REFCONF_RM|TMC429_READ|(motor_number<<5);
         ReadWrite429(Read, Write);
         Write[1]=Read[1];
-        if(ActualCommand.Value.Byte[0]!=0)
+        if(CMDGetFromUart.Value.Byte[0]!=0)
           Write[2]=Read[2]|0x02;
         else
           Write[2]=Read[2]&  ~0x02;
         Write[3]=Read[3];
-        Write[0]=IDX_REFCONF_RM|(ActualCommand.Motor<<5);
+        Write[0]=IDX_REFCONF_RM|(motor_number<<5);
         ReadWrite429(Read, Write);
-				if(ActualCommand.Value.Byte[0]!=0)
-					CMD_TRACE("motor[%d] right limit switch is disable\n",ActualCommand.Motor);	
+				if(CMDGetFromUart.Value.Byte[0]!=0)
+					CMD_TRACE("motor[%d] right limit switch is disable\n",motor_number);	
 				else 
-					CMD_TRACE("motor[%d] right limit switch is enable\n",ActualCommand.Motor);	
+					CMD_TRACE("motor[%d] right limit switch is enable\n",motor_number);	
         break;
 
       case leftLimit_disable: //13
-        Write[0]=IDX_REFCONF_RM|TMC429_READ|(ActualCommand.Motor<<5);
+        Write[0]=IDX_REFCONF_RM|TMC429_READ|(motor_number<<5);
         ReadWrite429(Read, Write);
         Write[1]=Read[1];
-        if(ActualCommand.Value.Byte[0]!=0)
+        if(CMDGetFromUart.Value.Byte[0]!=0)
           Write[2]=Read[2]|0x01;
         else
           Write[2]=Read[2]&  ~0x01;
         Write[3]=Read[3];
-        Write[0]=IDX_REFCONF_RM|(ActualCommand.Motor<<5);
+        Write[0]=IDX_REFCONF_RM|(motor_number<<5);
         ReadWrite429(Read, Write);
-				if(ActualCommand.Value.Byte[0]!=0)
-					CMD_TRACE("motor[%d] left limit switch is disable\n",ActualCommand.Motor);	
+				if(CMDGetFromUart.Value.Byte[0]!=0)
+					CMD_TRACE("motor[%d] left limit switch is disable\n",motor_number);	
 				else 
-					CMD_TRACE("motor[%d] left limit switch is enable\n",ActualCommand.Motor);	
+					CMD_TRACE("motor[%d] left limit switch is enable\n",motor_number);	
         break;
 
       case min_speed:
-        Write429Short(IDX_VMIN|(ActualCommand.Motor<<5), ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] minimum speed=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Short(IDX_VMIN|(motor_number<<5), TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] minimum speed=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case ramp_mode:
-        Set429RampMode(ActualCommand.Motor, ActualCommand.Value.Byte[0]);
-				CMD_TRACE("set motor[%d] ramp mode=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Byte[0]);
+        Set429RampMode(motor_number, TMC429_ParameterSet.Value.Byte[0]);
+				CMD_TRACE("set motor[%d] ramp mode=%d ok\n",motor_number,TMC429_ParameterSet.Value.Byte[0]);
         break;
 
       case ref_sw_tolerance:
-        Write429Short(MOTOR_NUMBER(ActualCommand.Motor)<<5|IDX_DX_REFTOLERANCE, ActualCommand.Value.Int32);
-				CMD_TRACE("set motor[%d] ref switch tolerance=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Short(MOTOR_NUMBER(motor_number)<<5|IDX_DX_REFTOLERANCE, TMC429_ParameterSet.Value.Int32);
+				CMD_TRACE("set motor[%d] ref switch tolerance=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
 			  break;
 
       case softStop_flag:
-        Read429Bytes(IDX_REFCONF_RM|MOTOR_NUMBER(ActualCommand.Motor)<<5, Read);
-        if(ActualCommand.Value.Int32!=0)
+        Read429Bytes(IDX_REFCONF_RM|MOTOR_NUMBER(motor_number)<<5, Read);
+        if(TMC429_ParameterSet.Value.Int32!=0)
           Read[1]|=0x04;
         else
           Read[1]&= ~0x04;
-        Write429Bytes(IDX_REFCONF_RM|MOTOR_NUMBER(ActualCommand.Motor)<<5, Read);
-				CMD_TRACE("set motor[%d] soft stop status=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        Write429Bytes(IDX_REFCONF_RM|MOTOR_NUMBER(motor_number)<<5, Read);
+				CMD_TRACE("set motor[%d] soft stop status=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case ramp_divisor:
-        Write[0]=IDX_PULSEDIV_RAMPDIV|TMC429_READ|(ActualCommand.Motor<<5);
+        Write[0]=IDX_PULSEDIV_RAMPDIV|TMC429_READ|(motor_number<<5);
         ReadWrite429(Read, Write);
         Write[1]=Read[1];
-        Write[2]=(Read[2] & 0xf0) | (ActualCommand.Value.Byte[0] & 0x0f);
+        Write[2]=(Read[2] & 0xf0) | (CMDGetFromUart.Value.Byte[0] & 0x0f);
         Write[3]=Read[3];
-        Write[0]=IDX_PULSEDIV_RAMPDIV|(ActualCommand.Motor<<5);
+        Write[0]=IDX_PULSEDIV_RAMPDIV|(motor_number<<5);
         ReadWrite429(Read, Write);
-        MotorConfig[ActualCommand.Motor].RampDiv=ActualCommand.Value.Byte[0] & 0x0f;
-				CMD_TRACE("set motor[%d] ramp divisor=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        MotorConfig[motor_number].RampDiv=CMDGetFromUart.Value.Byte[0] & 0x0f;
+				CMD_TRACE("set motor[%d] ramp divisor=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 
       case pulse_divisor:
-        Write[0]=IDX_PULSEDIV_RAMPDIV|TMC429_READ|(ActualCommand.Motor<<5);
+        Write[0]=IDX_PULSEDIV_RAMPDIV|TMC429_READ|(motor_number<<5);
         ReadWrite429(Read, Write);
         Write[1]=Read[1];
-        Write[2]=(Read[2] & 0x0f) | (ActualCommand.Value.Byte[0] << 4);
+        Write[2]=(Read[2] & 0x0f) | (CMDGetFromUart.Value.Byte[0] << 4);
         Write[3]=Read[3];
-        Write[0]=IDX_PULSEDIV_RAMPDIV|(ActualCommand.Motor<<5);
+        Write[0]=IDX_PULSEDIV_RAMPDIV|(motor_number<<5);
         ReadWrite429(Read, Write);
-        MotorConfig[ActualCommand.Motor].PulseDiv=ActualCommand.Value.Byte[0]& 0x0f;
-				CMD_TRACE("set motor[%d] pulse divisor=%d ok\n",ActualCommand.Motor,ActualCommand.Value.Int32);
+        MotorConfig[motor_number].PulseDiv=CMDGetFromUart.Value.Byte[0]& 0x0f;
+				CMD_TRACE("set motor[%d] pulse divisor=%d ok\n",motor_number,TMC429_ParameterSet.Value.Int32);
         break;
 			case limitSignal:
-				if(ActualCommand.Value.Int32!=0) 
+				if(TMC429_ParameterSet.Value.Int32!=0) 
 				{
 				  Write429Int(IDX_IF_CONFIG_429, IFCONF_EN_SD|IFCONF_EN_REFR|IFCONF_SDO_INT|IFCONF_INV_DIR|IFCONF_INV_REF);
 				}
 				else Write429Int(IDX_IF_CONFIG_429, IFCONF_EN_SD|IFCONF_EN_REFR|IFCONF_SDO_INT|IFCONF_INV_DIR);
-				CMD_TRACE("set limit signal effective trigger level=%d ok\n",ActualCommand.Value.Int32);
+				CMD_TRACE("set limit signal effective trigger level=%d ok\n",TMC429_ParameterSet.Value.Int32);
 				break;
 				
       default:
-        ActualReply.Status=REPLY_WRONG_TYPE;
+        TMC429_ParameterGet.Status=REPLY_WRONG_TYPE;
         break;
     }
-  } else ActualReply.Status=REPLY_INVALID_VALUE;
+  } else TMC429_ParameterGet.Status=REPLY_INVALID_VALUE;
 }
 
 /*
@@ -563,17 +486,154 @@ argc=5
 
   	
 */
+static void	printf_cmdList_motor(void)
+{
+		rt_kprintf("Usage: \n");
+		rt_kprintf("motor stop <axisNum>                  - stop motor\n");		
+		rt_kprintf("motor rotate <axisNum> <speed>        - rotate motor\n");	
+		rt_kprintf("motor moveto <axisNum> <position>     - absolute motion of the motor\n");
+		rt_kprintf("motor move <axisNum> <position>       - relative motion of the motor\n");
+
+		rt_kprintf("motor get <type> <axisNum>            - get axis parameter\n");	
+		rt_kprintf("motor set <type> <axisNum> <value>    - set axis parameter\n");	
+		
+		rt_kprintf("motor gohome <axisNum> <speed>        - home sensor as origin position\n");	
+		rt_kprintf("motor golimit <axisNum> <speed>       - limit sensor as origin position\n");	
+		
+		rt_kprintf("motor reset                           - motor reset\n");		
+		rt_kprintf("motor reset?                          - is axis reset or not\n");		
+}
+static void printf_cmdList_motor_set(void)
+{
+		rt_kprintf("Usage: \n");
+		rt_kprintf("motor set speed <axis> <value>             -set the rotate speed \n");				
+		CMD_TRACE("motor set next_position <axis> <value>      -set the target position to move\n");
+		CMD_TRACE("motor set actual_position <axis> <value>    -set the current position\n");				
+		CMD_TRACE("motor set actual_speed <axis> <value>       -set the current speed \n");
+		CMD_TRACE("motor set VMAX <axis> <value>               -set max positioning speed\n");
+		CMD_TRACE("motor set AMAX <axis> <value>               -set max acceleration\n");
+		CMD_TRACE("motor set ramp_div <axis> <value>           -set ramp divisor value\n");
+		CMD_TRACE("motor set pulse_div <axis> <value>          -set pulse divisor value\n");	
+		CMD_TRACE("motor set rightLimit <axis> <value>         -set right limit switch\n");
+		CMD_TRACE("motor set leftLimit <axis> <value>          -set left limit switch\n");
+		CMD_TRACE("motor set limitSignal <axis> <value>        -set limit signal effective trigger level\n");		
+}
+static void printf_cmdList_motor_get(void)
+{
+	rt_kprintf("Usage: \n");
+	//用户接口
+	rt_kprintf("motor get speed <axis>             -get the current speed \n");
+	rt_kprintf("motor get position <axis>          -get the current position\n");
+	 
+	rt_kprintf("motor get limit all                -get all limit switch status\n");	
+	rt_kprintf("motor get rightLimit <axis>        -get right switch status\n");
+	rt_kprintf("motor get leftLimit  <axis>        -get left switch status\n");	
+	
+	rt_kprintf("motor get is_homed <axis>          -is axis homed or not\n");	
+	rt_kprintf("motor get is_stop <axis>           -is axis stop or not\n");	
+	rt_kprintf("motor get is_reach <axis>          -is axis reach the position\n");	
+	rt_kprintf("motor get homeSensor <axis>        -get home sensor status\n");	
+	//调试接口
+	CMD_TRACE("motor get next_speed <axis>        -get the target speed \n");
+	CMD_TRACE("motor get next_position <axis>     -get the target position to move\n");
+	
+	CMD_TRACE("motor get VMAX <axis>              -get max positioning speed\n");
+	CMD_TRACE("motor get AMAX <axis>              -get max acceleration\n");
+
+	CMD_TRACE("motor get position_reached <axis>  -is reach positon or not\n");
+	CMD_TRACE("motor get ramp_div <axis>          -get ramp divisor value\n");
+	CMD_TRACE("motor get pulse_div <axis>         -get pulse divisor value\n");			
+	
+}
+/*********************************************************************************************************************/
+void  tmc429_hw_init(void)
+{
+	pinMode(POSCMP1_PIN, PIN_MODE_INPUT_PULLUP);
+  pinMode(INTOUT1_PIN, PIN_MODE_INPUT_PULLUP);	
+	
+	MX_SPI_Init();
+	
+#if defined(USING_INC_MBTMC429) 
+	MX_TIM3_Init();	
+	HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+#endif
+	
+	TMC429_ParameterPresetToRam();
+	
+	Init429();
+
+//板卡上电后已当前位置为原点，正常应用需要回原点动作
+	for(uint8_t i=0;i<3;i++)
+	{
+		HardStop(i);
+		delay_ms(50);
+		Write429Short(IDX_VMAX|(i<<5), 0);	
+		delay_ms(50);
+		Write429Int(IDX_XTARGET|(i<<5), 0);
+		Write429Int(IDX_XACTUAL|(i<<5), 0);
+	}
+}
+
+/***************************************************************//**
+  \fn RotateRight(void)
+  \brief Command ROR (see TMCL manual)
+********************************************************************/
+uint8_t TMC429_MotorRotate(uint8_t motor_number, int32_t motor_speed)
+{
+  if(motor_number < N_O_MOTORS)
+  {
+		//MotorStopByLimit[motor_number]=1;	
+    SpeedChangedFlag[motor_number]=TRUE;
+		
+    Set429RampMode(motor_number, RM_VELOCITY);
+		
+    Write429Short(IDX_VMAX|(motor_number<<5), 2047);
+    Write429Short(IDX_VTARGET|(motor_number<<5), motor_speed);
+		//rt_kprintf("motor%d is rotate at %d\n",motor_number,motor_speed);
+		return 0;	
+  }
+	return 1;
+}
+/***************************************************************//**
+  \fn MotorStop(void)
+  \brief Command MST
+
+  MST (Motor StoP) command (see TMCL manual).
+********************************************************************/
+uint8_t TMC429_MotorStop(uint8_t motor_number)
+{
+  if(motor_number < N_O_MOTORS)
+  {	
+		/*  立刻停止  */
+		HardStop(motor_number);
+		delay_ms(3);
+		/* 回原点过程中响应停止命令的变量置位 */
+		homeInfo.GoHome[motor_number]=0;
+		homeInfo.GoLimit[motor_number]=0;
+		/* 电机停止会自动返回当前位置 */
+		rt_kprintf("motor[%d] is stop and P[%d]=%d\n",motor_number,motor_number,Read429Int(IDX_XACTUAL|(motor_number<<5)));
+		return 0;
+  }
+	return 1;
+}
+void StopMotorByRamp(UINT Motor)
+{
+  Set429RampMode(MOTOR_NUMBER(Motor), RM_VELOCITY);
+  Write429Zero((MOTOR_NUMBER(Motor)<<5)|IDX_VTARGET);
+}
 int motor(int argc, char **argv)
 {
-	  ActualCommand.Type=Type_none;
-		ActualReply.Status=REPLY_OK;
+	  CMDGetFromUart.Type=Type_none;
+	
+		TMC429_ParameterGet.Status=REPLY_OK;
+	
     int result = RT_ERROR;
 	
 		if (argc == 2 )
 		{
 			if (!strcmp(argv[1], "reset?"))
 			{
-				CMD_TRACE("motor reset=%d\n",autoRESETmotor==OK_2 ? 1:0) ;
+				CMD_TRACE("motor reset=%d\n",motorsReset_InOrder==OK_2 ? 1:0) ;
 				return RT_EOK	; 				
 			}
 			else	if (!strcmp(argv[1], "reset"))
@@ -583,12 +643,12 @@ int motor(int argc, char **argv)
 			}
 			else	if (!strcmp(argv[1], "set"))
 			{
-				printf_cmd_motor_set();
+				printf_cmdList_motor_set();
 				return RT_EOK	; 
 			}
 			else	if (!strcmp(argv[1], "get"))
 			{
-				printf_cmd_motor_get();
+				printf_cmdList_motor_get();
 				return RT_EOK	; 
 			}
       else
@@ -598,14 +658,19 @@ int motor(int argc, char **argv)
 		}
 		if (argc == 3)
 		{
-			ActualCommand.Motor=atoi(argv[2]);
+			CMDGetFromUart.Motor=atoi(argv[2]);
 			if (!strcmp(argv[1], "stop"))
 			{
-				if(!TMCL_MotorStop())
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				
+				if(!TMC429_MotorStop(CMDGetFromUart.Motor))	//电机停止后自动会关闭串口打印压力
 				{
-					if(ActualCommand.Motor==AXIS_Z) 
+//					homeInfo.GoHome[0]=FALSE;		homeInfo.GoHome[1]=FALSE;		homeInfo.GoHome[2]=FALSE;	
+//					homeInfo.GoLimit[0]=FALSE;	homeInfo.GoLimit[1]=FALSE;	homeInfo.GoLimit[2]=FALSE;						
+//					buttonRESETpressed=FALSE;								  //只要有轴停止啊，就可以开启下次复位功能，复位过去被停止的话									
+					if(CMDGetFromUart.Motor==AXIS_Z) 
 					{	
-						closeSerial();
+						//closeSerial();
 					}
 					delay_ms(1);
 					return RT_EOK	;
@@ -615,11 +680,12 @@ int motor(int argc, char **argv)
 		}
 		else if (argc == 4)
 		{	
+			CMDGetFromUart.Motor=atoi(argv[2]);
+			CMDGetFromUart.Value.Int32=atoi(argv[3]);
+
 			if (!strcmp(argv[1], "rotate"))
 			{
-				ActualCommand.Motor=atoi(argv[2]);
-				ActualCommand.Value.Int32=atoi(argv[3]);
-				if(!(TMCL_MotorRotate()))	return RT_EOK	;
+				if(!(TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32)))	return RT_EOK	;
 				result = RT_EINVAL;
 			}
 			if (!strcmp(argv[1], "move") )
@@ -627,10 +693,7 @@ int motor(int argc, char **argv)
 				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
 				else 
 				{
-					ActualCommand.Motor=atoi(argv[2]);
-					ActualCommand.Type=MVP_REL;
-					ActualCommand.Value.Int32=atoi(argv[3]);
-					if(!TMCL_MoveToPosition())	return RT_EOK;
+					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor,  MVP_REL, CMDGetFromUart.Value.Int32))	return RT_EOK;
 					result =RT_EINVAL;
 				}
 			}
@@ -639,93 +702,92 @@ int motor(int argc, char **argv)
 				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
 				else 
 				{
-					ActualCommand.Motor=atoi(argv[2]);
-					ActualCommand.Type=MVP_ABS;
-					ActualCommand.Value.Int32=atoi(argv[3]);
-					if(!TMCL_MoveToPosition())	return RT_EOK;
+					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
 					result =RT_EINVAL;
 				}
 			}
 			if (!strcmp(argv[1], "gohome"))
 			{
-					pressureAlarm=0;
+					pressureAlarm=0;								//移除压力报警信号
 				
-				  //buttonRESETpressed=TRUE;
+				  //buttonRESETpressed=TRUE;				
+					Stop_HardTimer();		
+		
+					homeInfo.GoHome[CMDGetFromUart.Motor] = TRUE;
+				  homeInfo.GoLimit[CMDGetFromUart.Motor]= FALSE;
+					homeInfo.Homed[CMDGetFromUart.Motor]	= FALSE;
+
+					homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
 				
-					timer_stop();		
+					SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+		
+				  TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+					
+					CMD_TRACE("motor[%d] is start go home by searching home sensor\n",CMDGetFromUart.Motor);
 				
-					ActualCommand.Motor=atoi(argv[2]);
-					homeInfo.GoHome[ActualCommand.Motor]=TRUE;
-				  homeInfo.GoLimit[ActualCommand.Motor]=FALSE;
-					homeInfo.Homed[ActualCommand.Motor]=FALSE;
-					ActualCommand.Value.Int32=atoi(argv[3]);
-					homeInfo.HomeSpeed[ActualCommand.Motor]=ActualCommand.Value.Int32;	
-					if(ActualCommand.Value.Int32<0) {SetAmaxAutoByspeed(ActualCommand.Motor,-ActualCommand.Value.Int32);}
-					else														{SetAmaxAutoByspeed(ActualCommand.Motor,ActualCommand.Value.Int32);}
-				  TMCL_MotorRotate();
-					CMD_TRACE("motor[%d] is start go home by searching home sensor\n",ActualCommand.Motor);
 				  //电机回原点速度需要保存，下次复位按键需要调用，或者按键默认速度
-					timer_start();
+				
+					Start_HardTimer();
+				
 					return RT_EOK	;
 			}
 			if (!strcmp(argv[1], "golimit"))
 			{
 					pressureAlarm=0;
 				
-					timer_stop();
+					Stop_HardTimer();
 				
-					ActualCommand.Motor=atoi(argv[2]);
-				  homeInfo.GoHome[ActualCommand.Motor]=FALSE;
-					homeInfo.GoLimit[ActualCommand.Motor]=TRUE;
-					homeInfo.Homed[ActualCommand.Motor]=FALSE;
-					ActualCommand.Value.Int32=atoi(argv[3]);
-					homeInfo.HomeSpeed[ActualCommand.Motor]=ActualCommand.Value.Int32;	
-					if(ActualCommand.Value.Int32<0) {SetAmaxAutoByspeed(ActualCommand.Motor,-ActualCommand.Value.Int32);}
-					else														{SetAmaxAutoByspeed(ActualCommand.Motor,ActualCommand.Value.Int32);}
-				  TMCL_MotorRotate();
-					timer_start();
+				  homeInfo.GoHome[CMDGetFromUart.Motor]	=FALSE;
+					homeInfo.GoLimit[CMDGetFromUart.Motor]=TRUE;
+					homeInfo.Homed[CMDGetFromUart.Motor]	=FALSE;
+					homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
+					SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+
+				  TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+					Start_HardTimer();
+				
 					return RT_EOK	;
 			}
 			else if (!strcmp(argv[1], "get"))
 			{
-				if (!strcmp(argv[2], "speed")) 	 					ActualCommand.Type=actual_speed;
-				if (!strcmp(argv[2], "position")) 				ActualCommand.Type=actual_position;
-				if (!strcmp(argv[2], "is_homed")) 				ActualCommand.Type=is_homed;
-				if (!strcmp(argv[2], "is_stop")) 					ActualCommand.Type=is_stop;
-				if (!strcmp(argv[2], "is_reach")) 				ActualCommand.Type=is_reach;
+				if (!strcmp(argv[2], "speed")) 	 					CMDGetFromUart.Type=actual_speed;
+				if (!strcmp(argv[2], "position")) 				CMDGetFromUart.Type=actual_position;
+				if (!strcmp(argv[2], "is_homed")) 				CMDGetFromUart.Type=is_homed;
+				if (!strcmp(argv[2], "is_stop")) 					CMDGetFromUart.Type=is_stop;
+				if (!strcmp(argv[2], "is_reach")) 				CMDGetFromUart.Type=is_reach;
 			
-				if (!strcmp(argv[2], "next_speed")) 			ActualCommand.Type=next_speed;
-				if (!strcmp(argv[2], "next_position")) 	 	ActualCommand.Type=next_position;		
-				if (!strcmp(argv[2], "VMAX")) 					 	ActualCommand.Type=max_v_positioning;
-				if (!strcmp(argv[2], "AMAX")) 		 				ActualCommand.Type=max_acc;
-				if (!strcmp(argv[2], "position_reached")) ActualCommand.Type=position_reached;		
+				if (!strcmp(argv[2], "next_speed")) 			CMDGetFromUart.Type=next_speed;
+				if (!strcmp(argv[2], "next_position")) 	 	CMDGetFromUart.Type=next_position;		
+				if (!strcmp(argv[2], "VMAX")) 					 	CMDGetFromUart.Type=max_v_positioning;
+				if (!strcmp(argv[2], "AMAX")) 		 				CMDGetFromUart.Type=max_acc;
+				if (!strcmp(argv[2], "position_reached")) CMDGetFromUart.Type=position_reached;		
 				
-				if (!strcmp(argv[2], "rightLimit")) 			ActualCommand.Type=rightLimit_SwS;
-				if (!strcmp(argv[2], "leftLimit")) 				ActualCommand.Type=leftLimit_SwS;
-				if (!strcmp(argv[2], "limit")) 			      ActualCommand.Type=allLimit_SwS;
+				if (!strcmp(argv[2], "rightLimit")) 			CMDGetFromUart.Type=rightLimit_SwS;
+				if (!strcmp(argv[2], "leftLimit")) 				CMDGetFromUart.Type=leftLimit_SwS;
+				if (!strcmp(argv[2], "limit")) 			      CMDGetFromUart.Type=allLimit_SwS;
 				
-				if (!strcmp(argv[2], "homeSensor")) 			ActualCommand.Type=home_SenS;
+				if (!strcmp(argv[2], "homeSensor")) 			CMDGetFromUart.Type=home_SenS;
 				
-				if (!strcmp(argv[2], "rightLimit?"))			ActualCommand.Type=rightLimit_disable;
-				if (!strcmp(argv[2], "leftLimit?")) 			ActualCommand.Type=leftLimit_disable;
+				if (!strcmp(argv[2], "rightLimit?"))			CMDGetFromUart.Type=rightLimit_disable;
+				if (!strcmp(argv[2], "leftLimit?")) 			CMDGetFromUart.Type=leftLimit_disable;
 				
-				if (!strcmp(argv[2], "ramp_div")) 			  ActualCommand.Type=ramp_divisor;
-				if (!strcmp(argv[2], "pulse_div")) 				ActualCommand.Type=pulse_divisor;	
+				if (!strcmp(argv[2], "ramp_div")) 			  CMDGetFromUart.Type=ramp_divisor;
+				if (!strcmp(argv[2], "pulse_div")) 				CMDGetFromUart.Type=pulse_divisor;	
 				
-//				if (!strcmp(argv[2], "max_current")) 	   	ActualCommand.Type=max_current;
-//				if (!strcmp(argv[2], "standby_current")) 	ActualCommand.Type=standby_current;
-//				if (!strcmp(argv[2], "Llimit_off")) 			ActualCommand.Type=leftLimit_disable;
+//				if (!strcmp(argv[2], "max_current")) 	   	CMDGetFromUart.Type=max_current;
+//				if (!strcmp(argv[2], "standby_current")) 	CMDGetFromUart.Type=standby_current;
+//				if (!strcmp(argv[2], "Llimit_off")) 			CMDGetFromUart.Type=leftLimit_disable;
 				
-				if(ActualCommand.Type!=Type_none)
+				if(CMDGetFromUart.Type!=Type_none)
 				{
-					ActualCommand.Motor=atoi(argv[3]);
-					TMCL_GetAxisParameter();
-					if(ActualReply.Status==REPLY_OK) return RT_EOK;
+					CMDGetFromUart.Motor=atoi(argv[3]);
+					TMC429_GetAxisParameter(CMDGetFromUart.Motor,CMDGetFromUart.Type);
+					if(TMC429_ParameterGet.Status==REPLY_OK) return RT_EOK;
 					result=RT_EINVAL;
 				}
 				else 
 				{
-					printf_cmd_motor_get();
+					printf_cmdList_motor_get();
 					result =REPLY_INVALID_CMD;
 				}
 			}
@@ -735,34 +797,34 @@ int motor(int argc, char **argv)
 			if (!strcmp(argv[1], "set"))
 			{
 				//user
-				if (!strcmp(argv[2], "speed")) 					 	ActualCommand.Type=max_v_positioning;
+				if (!strcmp(argv[2], "speed")) 					 	CMDGetFromUart.Type=max_v_positioning;
 					
 				//debug
-				if (!strcmp(argv[2], "next_speed")) 			ActualCommand.Type=next_speed;		
-				if (!strcmp(argv[2], "next_position")) 	 	ActualCommand.Type=next_position;
-				if (!strcmp(argv[2], "actual_position")) 	ActualCommand.Type=actual_position;
-				if (!strcmp(argv[2], "actual_speed")) 	 	ActualCommand.Type=actual_speed;
-				if (!strcmp(argv[2], "VMAX")) 					ActualCommand.Type=max_v_positioning;
-				if (!strcmp(argv[2], "AMAX")) 		 				ActualCommand.Type=max_acc;
+				if (!strcmp(argv[2], "next_speed")) 			CMDGetFromUart.Type=next_speed;		
+				if (!strcmp(argv[2], "next_position")) 	 	CMDGetFromUart.Type=next_position;
+				if (!strcmp(argv[2], "actual_position")) 	CMDGetFromUart.Type=actual_position;
+				if (!strcmp(argv[2], "actual_speed")) 	 	CMDGetFromUart.Type=actual_speed;
+				if (!strcmp(argv[2], "VMAX")) 					  CMDGetFromUart.Type=max_v_positioning;
+				if (!strcmp(argv[2], "AMAX")) 		 				CMDGetFromUart.Type=max_acc;
 				//设置限位失能无效，需要调试原因
-				if (!strcmp(argv[2], "rightLimit"))				ActualCommand.Type=rightLimit_disable;
-				if (!strcmp(argv[2], "leftLimit")) 				ActualCommand.Type=leftLimit_disable;	  		
-				if (!strcmp(argv[2], "limitSignal")) 		  ActualCommand.Type=limitSignal;		
-				if (!strcmp(argv[2], "ramp_div")) 			  ActualCommand.Type=ramp_divisor;
-				if (!strcmp(argv[2], "pulse_div")) 				ActualCommand.Type=pulse_divisor;
-//				if (!strcmp(argv[2], "max_current")) 	   	ActualCommand.Type=max_current;
-//				if (!strcmp(argv[2], "standby_current")) 	ActualCommand.Type=standby_current;
-				if(ActualCommand.Type!=Type_none)	
+				if (!strcmp(argv[2], "rightLimit"))				CMDGetFromUart.Type=rightLimit_disable;
+				if (!strcmp(argv[2], "leftLimit")) 				CMDGetFromUart.Type=leftLimit_disable;	  		
+				if (!strcmp(argv[2], "limitSignal")) 		  CMDGetFromUart.Type=limitSignal;		
+				if (!strcmp(argv[2], "ramp_div")) 			  CMDGetFromUart.Type=ramp_divisor;
+				if (!strcmp(argv[2], "pulse_div")) 				CMDGetFromUart.Type=pulse_divisor;
+//				if (!strcmp(argv[2], "max_current")) 	   	CMDGetFromUart.Type=max_current;
+//				if (!strcmp(argv[2], "standby_current")) 	CMDGetFromUart.Type=standby_current;
+				if(CMDGetFromUart.Type!=Type_none)	
 				{
-					ActualCommand.Motor=atoi(argv[3]);
-					ActualCommand.Value.Int32=atoi(argv[4]);
-					TMCL_SetAxisParameter();
-					if(ActualReply.Status==REPLY_OK) return RT_EOK;
+					CMDGetFromUart.Motor=atoi(argv[3]);
+					CMDGetFromUart.Value.Int32=atoi(argv[4]);
+					TMC429_SetAxisParameter(CMDGetFromUart.Motor, CMDGetFromUart.Type, CMDGetFromUart.Value.Int32);
+					if(TMC429_ParameterGet.Status==REPLY_OK) return RT_EOK;
 					else result =RT_EINVAL;
 				}
 				else 
 				{
-					printf_cmd_motor_set();
+					printf_cmdList_motor_set();
 					result =REPLY_INVALID_CMD;														
 				}				
 			}
@@ -770,25 +832,11 @@ int motor(int argc, char **argv)
 		}		
 		if(	result == RT_EINVAL )
 		{
-			rt_kprintf("motor number must be 0~2\n",ActualCommand.Motor);
+			rt_kprintf("motor number must be 0~2\n",CMDGetFromUart.Motor);
 		}
 		else if( result == RT_ERROR )
 		{
-			rt_kprintf("Usage: \n");
-			rt_kprintf("motor stop <axisNum>                  - stop motor\n");		
-			rt_kprintf("motor rotate <axisNum> <speed>        - rotate motor\n");	
-			rt_kprintf("motor moveto <axisNum> <position>     - absolute motion of the motor\n");
-			rt_kprintf("motor move <axisNum> <position>       - relative motion of the motor\n");
-
-			rt_kprintf("motor get <type> <axisNum>            - get axis parameter\n");	
-			rt_kprintf("motor set <type> <axisNum> <value>    - set axis parameter\n");	
-			
-			rt_kprintf("motor gohome <axisNum> <speed>        - home sensor as origin position\n");	
-			rt_kprintf("motor golimit <axisNum> <speed>       - limit sensor as origin position\n");	
-			
-			rt_kprintf("motor reset                           - motor reset\n");		
-			rt_kprintf("motor reset?                          - is axis reset or not\n");	
-		
+			printf_cmdList_motor();
 		}
 	  return result;
 }
@@ -798,21 +846,21 @@ static rt_uint8_t motion_stack[ 512 ];
 static struct rt_thread motion_thread;
 static void motion_thread_entry(void *parameter);
 //////////////////////////////////////////////////////////
-static void MotorLimitProcess(uint8_t axisNum)
+static void MotorKeepStop_removeLimitSigal(uint8_t motor_number)
 {
-	if(homeInfo.GoHome[axisNum]==FALSE && homeInfo.GoLimit[axisNum]==FALSE)	//不是回原点动作
+	if(homeInfo.GoHome[motor_number]==FALSE && homeInfo.GoLimit[motor_number]==FALSE)	//不是回原点动作
 	{	
-		if(MotorStopByLimit[axisNum]==1)
+		if(MotorStopByLimit[motor_number]==1)
 		{
 			uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);				//限位状态读取
-			//CMD_TRACE("%d GoHome=%d,GoLimit=%d,SwitchStatus=%d,V=%d\n",axisNum,homeInfo.GoHome[axisNum],homeInfo.GoLimit[axisNum],SwitchStatus,Read429Short(IDX_VACTUAL|(axisNum<<5)));
+			//CMD_TRACE("%d GoHome=%d,GoLimit=%d,SwitchStatus=%d,V=%d\n",motor_number,homeInfo.GoHome[motor_number],homeInfo.GoLimit[motor_number],SwitchStatus,Read429Short(IDX_VACTUAL|(motor_number<<5)));
 
 			//左				需要再判断速度													右              //碰到限位停止，需要再次发命令运动
-			if(((((SwitchStatus& (0x02<<axisNum*2))?1:0) ==1)	||  (((SwitchStatus& (0x01<<axisNum*2)) ?1:0)==1))	\
-				   && ( Read429Short(IDX_VACTUAL|(axisNum<<5))==0 )	)						 
+			if(((((SwitchStatus& (0x02<<motor_number*2))?1:0) ==1)	||  (((SwitchStatus& (0x01<<motor_number*2)) ?1:0)==1))	\
+				   && ( Read429Short(IDX_VACTUAL|(motor_number<<5))==0 )	)						 
 			{					
 					
-					MotorStop(axisNum);		MotorStopByLimit[axisNum]=0;
+					TMC429_MotorStop(motor_number);		MotorStopByLimit[motor_number]=0;
 					//CMD_TRACE("MotorStop(%d) is act\n",axisNum);
 			}		
 		}
@@ -833,7 +881,7 @@ static void motion_thread_entry(void *parameter)
 			{
 				for(uint8_t i=0;i<N_O_MOTORS;i++)	
 				{
-					MotorLimitProcess(i);
+					MotorKeepStop_removeLimitSigal(i);
 					cnt_delay=0;
 				}
 			}
@@ -861,45 +909,7 @@ int MotorLimitCheck_thread_init(void)
     return 0;
 }
 
-static void printf_cmd_motor_set(void)
-{
-		rt_kprintf("Usage: \n");
-		rt_kprintf("motor set speed <axis> <value>              -set the target speed \n");				
-		CMD_TRACE("motor set next_position <axis> <value>      -set the target position to move\n");
-		CMD_TRACE("motor set actual_position <axis> <value>    -set the current position\n");				
-		CMD_TRACE("motor set actual_speed <axis> <value>       -set the current speed \n");
-		CMD_TRACE("motor set VMAX <axis> <value>               -set max positioning speed\n");
-		CMD_TRACE("motor set AMAX <axis> <value>               -set max acceleration\n");
-		CMD_TRACE("motor set ramp_div <axis> <value>           -set ramp divisor value\n");
-		CMD_TRACE("motor set pulse_div <axis> <value>          -set pulse divisor value\n");	
-		CMD_TRACE("motor set rightLimit <axis> <value>         -set right limit switch\n");
-		CMD_TRACE("motor set leftLimit <axis> <value>          -set left limit switch\n");
-		CMD_TRACE("motor set limitSignal <axis> <value>        -set limit signal effective trigger level\n");		
-}
-static void printf_cmd_motor_get(void)
-{
-	rt_kprintf("Usage: \n");
-	//用户接口
-	rt_kprintf("motor get speed <axis>             -get the current speed \n");
-	rt_kprintf("motor get position <axis>          -get the current position\n");
-	 
-	rt_kprintf("motor get limit all                -get all limit switch status\n");	
-	rt_kprintf("motor get rightLimit <axis>        -get right switch status\n");
-	rt_kprintf("motor get leftLimit  <axis>        -get left switch status\n");	
-	
-	rt_kprintf("motor get is_homed <axis>          -is axis homed or not\n");	
-	rt_kprintf("motor get is_stop <axis>           -is axis stop or not\n");	
-	rt_kprintf("motor get is_reach <axis>          -is axis reach the position\n");	
-	rt_kprintf("motor get homeSensor <axis>        -get home sensor status\n");	
-	//调试接口
-	CMD_TRACE("motor get next_speed <axis>        -get the target speed \n");
-	CMD_TRACE("motor get next_position <axis>     -get the target position to move\n");
-	
-	CMD_TRACE("motor get VMAX <axis>              -get max positioning speed\n");
-	CMD_TRACE("motor get AMAX <axis>              -get max acceleration\n");
+//
 
-	CMD_TRACE("motor get position_reached <axis>  -is reach positon or not\n");
-	CMD_TRACE("motor get ramp_div <axis>          -get ramp divisor value\n");
-	CMD_TRACE("motor get pulse_div <axis>         -get pulse divisor value\n");			
-	
-}
+
+

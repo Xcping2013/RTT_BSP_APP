@@ -19,25 +19,16 @@ __cplusplus：当编写C++程序时该标识符被定义
 #include "bsp_include.h"	
 #include "app_include.h"
 
+/*******************************************************************************************************/
 PARAM_T g_tParam;
 
-int motorPosition[3];
-uint8_t autoRESETmotor=FALSE;
-uint8_t TimerOpened=0;
+int 		motorPosition[N_O_MOTORS];
+uint8_t motorsReset_InOrder=FALSE;
+uint8_t HardTimer_StartStop=0;
 
-//对于限位安全要求高的项目：HARD_REF + 原点 HardStop  其他使用RampStop
-void RampStop(UINT Motor)
-{
-  Set429RampMode(MOTOR_NUMBER(Motor), RM_VELOCITY);
-  Write429Zero((MOTOR_NUMBER(Motor)<<5)|IDX_VTARGET);
-}
-
-void LoadSettingViaProID(void)
-{
-	
-	
-}
+/*******************************************************************************************************/
 //
+/*****************/
 uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
 {
 	while (BufferLength--)
@@ -51,6 +42,20 @@ uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
   }
 
   return 0;
+}
+
+void xstrcat(char *str1,char *str2)
+{
+	int i,len1;
+	for(i=0;str1[i]!='\0';i++);
+	len1=i;
+	for(i=0;str2[i]!='\0';i++)
+	str1[i+len1]=str2[i];
+}
+
+void reboot(void)
+{
+    rt_hw_cpu_reset();
 }
 
 UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
@@ -88,20 +93,13 @@ UCHAR ReadWriteSPI2(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
       return 0;
   }
 }
-
-void xstrcat(char *str1,char *str2)
+/*****************/
+void LoadSettingViaProID(void)
 {
-	int i,len1;
-	for(i=0;str1[i]!='\0';i++);
-	len1=i;
-	for(i=0;str2[i]!='\0';i++)
-	str1[i+len1]=str2[i];
+	
+	
 }
 
-void reboot(void)
-{
-    rt_hw_cpu_reset();
-}
 
 /*
 *********************************************************************************************************
@@ -219,10 +217,12 @@ int ParamSave(int argc, char **argv)
 	int result = RT_EOK;
 	if (argc != 3)
 	{
-			CMD_TRACE("Please input: ParamSave <par> <value> ......\n");
-			return -RT_ERROR;
+//			CMD_TRACE("Please input: ParamSave <par> <value> ......\n");
+//			result = RT_EOK;	
+//			return -RT_ERROR;
+		result = REPLY_INVALID_CMD;
 	}
-	else
+	else 
 	{
 		if (!strcmp(argv[1], "MasterBaudrate")) 
 			g_tParam.MasterBaudrate  = atoi(argv[2]);		
@@ -242,27 +242,26 @@ int ParamSave(int argc, char **argv)
 			
 			else if (!strcmp(argv[2], "common_use")) 		      		g_tParam.Project_ID  = COMMON;			//双轴
 			
-			else 
-			{
-				rt_kprintf("Usage: \n");
-				rt_kprintf("ParamSave ProjectType button_online      -set controller fit to button online fixture\n");	
-				rt_kprintf("ParamSave ProjectType button_offline     -set controller fit to button offline fixture\n");	
-				
-				rt_kprintf("ParamSave ProjectType button_road        -set controller fit to button road fixture\n");
-				
-				rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to OQC-Flex fixture\n");
-				rt_kprintf("ParamSave ProjectType lidopen            -set controller fit to lidopen fixture\n");
-				
-				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-1      -set controller fit to use 1 motor\n");
-				rt_kprintf("ParamSave ProjectType BUTTON-AXIS-2      -set controller fit to use 2 motor\n");
-	
-				rt_kprintf("ParamSave ProjectType AOI-AXIS-2         -set controller fit to use 2 motor\n");
-				rt_kprintf("ParamSave ProjectType common_use      -set controller fit to common_use\n");
-				
-				result = REPLY_INVALID_CMD;
-			}
+			else 	result = REPLY_INVALID_CMD;
 		}
 		else result = RT_ERROR;
+	}
+	if(result == REPLY_INVALID_CMD ) 
+	{
+		rt_kprintf("Usage: \n");
+		rt_kprintf("ParamSave ProjectType button_online      -set controller fit to button online fixture\n");	
+		rt_kprintf("ParamSave ProjectType button_offline     -set controller fit to button offline fixture\n");	
+		
+		rt_kprintf("ParamSave ProjectType button_road        -set controller fit to button road fixture\n");
+		
+		rt_kprintf("ParamSave ProjectType OQC-Flex           -set controller fit to OQC-Flex fixture\n");
+		rt_kprintf("ParamSave ProjectType lidopen            -set controller fit to lidopen fixture\n");
+		
+		rt_kprintf("ParamSave ProjectType BUTTON-AXIS-1      -set controller fit to use 1 motor\n");
+		rt_kprintf("ParamSave ProjectType BUTTON-AXIS-2      -set controller fit to use 2 motor\n");
+
+		rt_kprintf("ParamSave ProjectType AOI-AXIS-2         -set controller fit to use 2 motor\n");
+		rt_kprintf("ParamSave ProjectType common_use      -set controller fit to common_use\n");			
 	}
 	if(result == RT_EOK ) 
 	{
@@ -354,9 +353,6 @@ void SetAmaxAutoByspeed(u8 axisNum,int speed)
 	}
 }
 
-
-
-
 void get_motor_position(void)
 {
 	for(uint8_t i=0;i<N_O_MOTORS;i++)
@@ -376,10 +372,10 @@ void MotorAutoReset_preset( void )
 {	
 	pressureAlarm=0;
 	
-	timer_stop();	
-	autoRESETmotor=TRUE;
+	Stop_HardTimer();	
+	motorsReset_InOrder=TRUE;
 	//设置回原点速度模式下的最大速度和加速度
-	MotorStop(0);MotorStop(1);MotorStop(2);
+	TMC429_MotorStop(0);TMC429_MotorStop(1);TMC429_MotorStop(2);
 	Write429Int(IDX_VMAX|MOTOR0, 2047);		
 	Write429Int(IDX_VMAX|MOTOR1, 2047);			
 	Write429Int(IDX_VMAX|MOTOR2, 2047);		
@@ -402,22 +398,26 @@ void MotorAutoReset_preset( void )
 				 //Cylinder_Reset_check();
 		case BUTTON_ONLINE:
 				 homeInfo.GoHome[AXIS_Y]=TRUE;
-				 RotateLeft(AXIS_Y,homeInfo.HomeSpeed[AXIS_Y]);	  //逆时针旋转		L		Y轴先复位		Y轴先后后前
+				 TMC429_MotorRotate(AXIS_Y,-homeInfo.HomeSpeed[AXIS_Y]);			//逆时针旋转		L		Y轴先复位		Y轴先后后前	
+		
+				 Start_HardTimer();
+  
 				break;
 				 
 		case OQC_FLEX:
     case BUTTON_ROAD:
 			
-				 ActualCommand.Motor=AXIS_Z;
-				 homeInfo.GoHome[ActualCommand.Motor]=TRUE;
-				 homeInfo.GoLimit[ActualCommand.Motor]=FALSE;
-				 homeInfo.Homed[ActualCommand.Motor]=FALSE;
-				 homeInfo.HomeSpeed[ActualCommand.Motor]=-g_tParam.speed_home[ActualCommand.Motor];
-				 ActualCommand.Value.Int32=homeInfo.HomeSpeed[ActualCommand.Motor];	 
-		     TMCL_MotorRotate();				
-				//RotateLeft(AXIS_Z,-homeInfo.HomeSpeed[AXIS_Z]);		//逆时针旋转		L		Z轴先复位		Z轴先上后下
-				 CMD_TRACE("motor[%d] is start go home by searching home sensor\n",ActualCommand.Motor);
-				 timer_start();
+				 homeInfo.GoHome[AXIS_Z]=TRUE;
+				 homeInfo.GoLimit[AXIS_Z]=FALSE;
+				 homeInfo.Homed[AXIS_Z]=FALSE;
+				 homeInfo.HomeSpeed[AXIS_Z]=-g_tParam.speed_home[AXIS_Z];
+		
+		     TMC429_MotorRotate(AXIS_Z, -g_tParam.speed_home[AXIS_Z]);			//逆时针旋转		L		Z轴先复位		Z轴先上后下
+	
+				 CMD_TRACE("motor[%d] is start go home by searching home sensor\n",AXIS_Z);
+		
+				 Start_HardTimer();
+		
 		break;	
 		
 		default:
@@ -453,21 +453,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void MotorSensorCheck_timer_init(void)
 {
 	MX_TIM1_Init();
-	//timer_start();
+	//Start_HardTimer();
 }
-void timer_start(void)
+void Start_HardTimer(void)
 {
-	if(TimerOpened==0)
+	if(HardTimer_StartStop==0)
 	{
-		TimerOpened=1;
+		HardTimer_StartStop=1;
 		HAL_TIM_Base_Start_IT(&htim1);
 	}
 }
-void timer_stop(void)
+void Stop_HardTimer(void)
 {
-	if(TimerOpened==1)
+	if(HardTimer_StartStop==1)
 	{
-		TimerOpened=0;
+		HardTimer_StartStop=0;
 		HAL_TIM_Base_Stop_IT(&htim1);
 	}
 }
@@ -497,6 +497,8 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 
 #endif /* USE_FULL_ASSERT */
+
+//
 
 
 
