@@ -24,11 +24,11 @@ void at24cxx_hw_init(void)
 	if (at24cxx.check(at24c256) == 0)
 	{
 		/* Ã»ÓÐ¼ì²âµ½EEPROM */
-		EEPROM_TRACE("no eeprom found!!!\r\n");
+		EEPROM_TRACE("no eeprom found!!!\n");
 	}
 	else 
 	{
-		//EEPROM_TRACE("eeprom at24c256 init...ok\r\n");
+		//EEPROM_TRACE("eeprom at24c256 init...ok\n");
 	}	
 	LoadParamFromEeprom();
 }

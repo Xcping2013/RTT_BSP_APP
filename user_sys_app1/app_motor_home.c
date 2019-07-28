@@ -10,7 +10,11 @@ homeInfo_t homeInfo;
 static void setPositionAsOrigin(uint8_t axisNum);
 
 /*********************************************************************************************************************/
-//在定时器调用的函数里面使用delay_ms？和调用定时器开关？
+/*
+1.关闭轴回原点功能, 设置当前轴回原点OK
+2.按项目号进行开启下个轴回原点功能并配置相关参数
+
+*/
 static void setPositionAsOrigin(u8 axisNum) 
 {
 	/* 
@@ -106,37 +110,6 @@ static void setPositionAsOrigin(u8 axisNum)
 }
 //
 //if(buttonRESETpressed==TRUE)	MotorHomingWithHomeSensor(0,100);
-void MotorHomingWithHomeSensor1(uint8_t axisNum, int HomeSpeed)
-{	
-	if(homeInfo.GoHome[axisNum])
-	{
-		uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-		if(g_tParam.Project_ID==BUTTON_ROAD && axisNum==0)
-		{
-			if( ((HomeSpeed>0 && (Read429Short(IDX_VACTUAL|(0<<5)))<0 ) || \
-				(HomeSpeed<0 && (Read429Short(IDX_VACTUAL|(0<<5)))>0 )) && \
-				 (pinRead(homeSensorPin[axisNum])==IN_OFF ))
-		     { setPositionAsOrigin(0);		}																   //只要采集不到原点信号,电机在两个限位之间来回运动,触发硬件限位自动停止	
-		}
-			
-		if( ((HomeSpeed>0 && (Read429Short(IDX_VACTUAL|(axisNum<<5)))<0 ) || \
-				(HomeSpeed<0 && (Read429Short(IDX_VACTUAL|(axisNum<<5)))>0 )) && \
-				 (pinRead(homeSensorPin[axisNum])==IN_ON ))
-		{ setPositionAsOrigin(axisNum);		}																   //只要采集不到原点信号,电机在两个限位之间来回运动,触发硬件限位自动停止
-		else 
-		{
-			uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-			if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)
-			{		
-				TMC429_MotorRotate(axisNum,HomeSpeed);
-			}
-			if((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)
-			{																													  //REFR1  顺时针触发右限位时反转
-				TMC429_MotorRotate(axisNum,-HomeSpeed);
-			}
-		}
-	}
-}
 //正速度为正限位为原点
 void MotorHomingWithLimitSwitch(uint8_t axisNum, int HomeSpeed)
 {	
@@ -167,36 +140,26 @@ BUG:  原点一直触发的时候，再触发限位不会进行反向运动
 
 void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed)
 {	
-	static u8 ror_L_lock=0;
-	static u8 ror_R_lock=0;
 	if(homeInfo.GoHome[axisNum])
 	{
-		if(Read429Short(IDX_VACTUAL|(axisNum<<5))==0)
+		//回原点过程中速度=0,则触发原点，电机会往方向运行
+		//如果回原点过程响应电机停止命令，则动作为：电机向上回原点，电机停止命令，电机向下找负限位，再发停止命令，电机又反向运动
+		//所以电机回原点命令后不响应其他动作命令，或者响应其他命令时关闭回原点开关
+		if(Read429Short(IDX_VACTUAL|(axisNum<<5))==0)													
 		{
 			u8 SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-			if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											  //触发左限位
+			if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											  	//触发左限位
 			{		
-				//delay_ms(100);//定时器里面使用delay?
-				//if(ror_R_lock==0)
-				{
 					if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,HomeSpeed);				  //向右转
-					else 						TMC429_MotorRotate(axisNum,-HomeSpeed);
-					ror_R_lock=1;
-					ror_L_lock=0;
-				}		
+					else 						TMC429_MotorRotate(axisNum,-HomeSpeed);		
 			}
 			if((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)												//触发右限位
 			{																													 		
-				//delay_ms(100);
-				//if(ror_L_lock==0)
-				{
 					if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,-HomeSpeed);					//左转
 					else 						TMC429_MotorRotate(axisNum,HomeSpeed);
-					ror_L_lock=1;
-					ror_R_lock=0;
 				}
 			}
-		}
+	  //电机还在运行中触发原点
 		//road 的Z轴使用外置原点	X轴使用内置原点
     else if((g_tParam.Project_ID==BUTTON_ROAD && ((axisNum==0 && pinRead(homeSensorPin[axisNum])==IN_OFF) || \
 			
@@ -209,7 +172,6 @@ void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed)
 				setPositionAsOrigin(axisNum);		
 			}
 		}
-
 	}
 }
 //

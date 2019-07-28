@@ -54,7 +54,7 @@ void RotateLeft(u8 axis, int velocity);
 void MotorHoming_ver3(void);
 void MotorHoming_preset( uint8_t ID);
 void MotorHoming_preset_Road(void);
-void CommandCheckAndExe(void);
+void CommandCheckAndExeViaUart1(void);
 
 void EXTIX_Init(void);
 

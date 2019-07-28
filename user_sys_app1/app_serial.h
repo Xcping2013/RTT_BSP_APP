@@ -6,4 +6,7 @@
 int uart_stream_thread_init(void);
 int printdata(int argc, char **argv);
 
+void openSerial(void);
+void closeSerial(void);
+
 #endif

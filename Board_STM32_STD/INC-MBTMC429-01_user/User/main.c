@@ -83,7 +83,7 @@ int main(void)
 	delay_ms(200);															//wait for all peripheral init ok
 	
 	UART_SendStr("Fixture Init Ok\n>>");
-	UART_Printf("\nfirmware ver3.4 build at %s %s\n\n", __TIME__, __DATE__);
+	UART_Printf("\nfirmware ver3.5 build at %s %s\n\n", __TIME__, __DATE__);
 	
   BlinkDelay=GetSysTimer();
   task1Delay=GetSysTimer();
@@ -108,7 +108,7 @@ int main(void)
 		/*
 		PC send cmd to controller 
 		*/
-		CommandCheckAndExe();
+		CommandCheckAndExeViaUart1();
 
 		if (ProID==BUTTON_ROAD) releaseAlarmTask();
 		

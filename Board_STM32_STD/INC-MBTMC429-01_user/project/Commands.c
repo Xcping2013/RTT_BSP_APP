@@ -39,7 +39,7 @@ static void MakeLowercase( char *str)
 }
 
 //
-uint8_t  ProcessCommand(char  *Commands)
+uint8_t  Command_Analysis_Process(char  *Commands)
 {
 	MakeLowercase(Commands);	
 

@@ -1,3 +1,5 @@
+/****************************************************************************************/
+
 #include "bsp_include.h"	
 #include "app_include.h"
 
@@ -6,7 +8,7 @@
 //#include "inc_mbtmc429.h"
 //CubeMX txt
 
-
+/****************************************************************************************/
 uint8_t rgb_pin_num[3]={PD_6,PD_5,PD_4};
 
 
@@ -53,14 +55,18 @@ uint8_t	outputs_pin_num[OUTPUT_COUNT]=
 };
 uint8_t homeSensorPin[3]={PB_9,PE_0,PE_1};
 
+/****************************************************************************************/
+
 static rt_timer_t timer1;
 static rt_uint8_t out_flash_on[9]={0};
 static rt_uint16_t out_flash_delay[9]={0};
 static rt_uint16_t out_flash_cnt[9]={0};
 static int timer_10ms_init(void);
-static void timeout1(void *parameter);
+static void timeout_10ms(void *parameter);
 
 static void InitIn8AsExti(void);
+
+/****************************************************************************************/
 
 void dido_hw_init(void)
 {    
@@ -219,34 +225,34 @@ int output(int argc, char **argv)
 
 static int timer_10ms_init(void)
 {
-	timer1 = rt_timer_create("timer1", timeout1,
-                             RT_NULL, 3,
+	timer1 = rt_timer_create("timer_10ms", timeout_10ms,
+                             RT_NULL, 10,
                              RT_TIMER_FLAG_PERIODIC);
   if (timer1 != RT_NULL) 
 		rt_timer_start(timer1);	
 	return 0;
 }
-static void timeout1(void *parameter)
+static void timeout_10ms(void *parameter)
 {
 	if(g_tParam.Project_ID!=AOI_2AXIS || g_tParam.Project_ID!=COMMON || g_tParam.Project_ID!=LIDOPEN)
 	{
 		buttonSTART_process(1,1);
 		buttonRESET_process(2,2);	
 	}
-	//DEBUG_TRACE("timeout1 enter\n");	
-	for(uint8_t i=0;i<9;i++)
-	{
-		if ((out_flash_on[i]==1) && (out_flash_cnt[i]++>out_flash_delay[i]))
-		{
-			if(i==8) pinToggle(rgb_pin_num[1]);
-			else
-			{
-				pinToggle(outputs_pin_num[i]);
-			}		
-			//DEBUG_TRACE("out%d is flashing\n",i+1);	
-			out_flash_cnt[i]=0;
-		}
-	}	
+	//DEBUG_TRACE("timeout_10ms enter\n");	
+//	for(uint8_t i=0;i<9;i++)
+//	{
+//		if ((out_flash_on[i]==1) && (out_flash_cnt[i]++>out_flash_delay[i]))
+//		{
+//			if(i==8) pinToggle(rgb_pin_num[1]);
+//			else
+//			{
+//				pinToggle(outputs_pin_num[i]);
+//			}		
+//			//DEBUG_TRACE("out%d is flashing\n",i+1);	
+//			out_flash_cnt[i]=0;
+//		}
+//	}	
 }
 //
 int beep(int argc, char **argv)
@@ -316,13 +322,16 @@ int rgb(int argc, char **argv)
 //pressureAlarm
 
 uint8_t pressureAlarm=0;
-//HAL_NVIC_SetPriority(irqmap->irqno, 4, 0);  5-->4
+
 void alarm_on(void *args)
 {
 	if(INPUT8==0 && buttonRESETpressed==0 )	 	
 	{			
-		HardStop(2);//HardStop(1);HardStop(0);
-		//buttonRESETpressed=0;	KEY_RESET_LED=0;	KEY_START_pressed=0;	KEY_START_LED=0;
+
+		closeSerial();
+
+		HardStop(2);
+
 		homeInfo.Homed[2]=FALSE;
 		homeInfo.GoHome[2]=FALSE;	
 		homeInfo.GoLimit[2]=FALSE;	
@@ -336,7 +345,11 @@ void InitIn8AsExti(void)
   rt_pin_attach_irq(inputs_pin_num[8-1], PIN_IRQ_MODE_FALLING, alarm_on, RT_NULL);
 	rt_pin_irq_enable(inputs_pin_num[8-1], PIN_IRQ_ENABLE);
 }
-
+void alarm_clear(void *args)
+{
+	pressureAlarm=0;
+}
+MSH_CMD_EXPORT(alarm_clear, ......);
 
 
 
@@ -377,23 +390,6 @@ void InitIn8AsExti(void)
 //}
 
 //MSH_CMD_EXPORT_ALIAS(msh_gpio, gpio,GPIO commands);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //

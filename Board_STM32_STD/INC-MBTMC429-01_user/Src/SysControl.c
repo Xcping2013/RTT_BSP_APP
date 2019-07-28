@@ -280,7 +280,7 @@ static void SetUpAfterHomed(u8 axis)
 	
 }
 //
-void CommandCheckAndExe(void)
+void CommandCheckAndExeViaUart1(void)
 {
 	u8 len;
 	if(USART_RX_STA&0x8000)									//Ω” ’µΩ\r\n						
@@ -291,7 +291,7 @@ void CommandCheckAndExe(void)
 		UART_SendChar('\n');
 		if(USART_RX_BUF[0]=='\0')	
 			UART_SendStr("\n");
-		else if(ProcessCommand((char*)USART_RX_BUF))	;
+		else if(Command_Analysis_Process((char*)USART_RX_BUF))	;
 		else 
 			UART_SendStr("<NA>\n");								
 		

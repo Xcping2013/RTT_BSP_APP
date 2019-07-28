@@ -16,6 +16,10 @@ __STDC__：当要求程序严格遵循ANSI C标准时该标识被赋值为1；
 
 __cplusplus：当编写C++程序时该标识符被定义
 */
+
+/*	
+
+*/
 #include "bsp_include.h"	
 #include "app_include.h"
 
@@ -24,7 +28,7 @@ PARAM_T g_tParam;
 
 int 		motorPosition[N_O_MOTORS];
 uint8_t motorsReset_InOrder=FALSE;
-uint8_t HardTimer_StartStop=0;
+volatile uint8_t HardTimer_StartStop=0;
 
 /*******************************************************************************************************/
 //
@@ -66,7 +70,7 @@ UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
     case SPI_DEV_TMC429:
 				 SELECT_TMC429();
 
-			   HAL_SPI_TransmitReceive(&hspi1, &aTxBuffer, &aRxBuffer, 1,5000);
+			   HAL_SPI_TransmitReceive(&hspi1, &aTxBuffer, &aRxBuffer, 1,1000);
 				 if(LastTransfer) DESELECT_TMC429();
 
       return aRxBuffer;
@@ -84,7 +88,7 @@ UCHAR ReadWriteSPI2(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
     case SPI_DEV_TMC429:
 				 SELECT_TMC429();
 
-			   HAL_SPI_TransmitReceive(&hspi2, &aTxBuffer, &aRxBuffer, 1,5000);
+			   HAL_SPI_TransmitReceive(&hspi2, &aTxBuffer, &aRxBuffer, 1,1000);
 				 if(LastTransfer) DESELECT_TMC429();
 
       return aRxBuffer;
@@ -370,6 +374,10 @@ ROAD			 ：Z轴先上后下
 */
 void MotorAutoReset_preset( void )
 {	
+	closeSerial();
+	
+	buttonRESETpressed=TRUE;	setChOutput(2,1);	 setChOutput(1,0);	
+	
 	pressureAlarm=0;
 	
 	Stop_HardTimer();	
@@ -388,7 +396,7 @@ void MotorAutoReset_preset( void )
 		homeInfo.GoLimit[i]=FALSE;
 		SetAmaxAutoByspeed(i,g_tParam.speed_home[i]);
 		//		SetAMax(i, 2000);
-//		homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];	
+		homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];	
 	}
 	
 						
@@ -412,7 +420,7 @@ void MotorAutoReset_preset( void )
 				 homeInfo.Homed[AXIS_Z]=FALSE;
 				 homeInfo.HomeSpeed[AXIS_Z]=-g_tParam.speed_home[AXIS_Z];
 		
-		     TMC429_MotorRotate(AXIS_Z, -g_tParam.speed_home[AXIS_Z]);			//逆时针旋转		L		Z轴先复位		Z轴先上后下
+				 TMC429_MotorRotate(AXIS_Z, -g_tParam.speed_home[AXIS_Z]);			//逆时针旋转		L		Z轴先复位		Z轴先上后下
 	
 				 CMD_TRACE("motor[%d] is start go home by searching home sensor\n",AXIS_Z);
 		

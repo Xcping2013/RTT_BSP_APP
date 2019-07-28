@@ -16,7 +16,7 @@ static rt_uint16_t out_flash_cnt[16]={0};
 
 static void dido_pca9539a_init(void);
 static int timer_10ms_init(void);
-static void timeout1(void *parameter);
+static void timeout_10ms(void *parameter);
 
 void PCA9539A_Init(pca9539a_t dev)
 {
@@ -238,14 +238,14 @@ int output(int argc, char **argv)
 
 static int timer_10ms_init(void)
 {
-	timer1 = rt_timer_create("timer1", timeout1,
+	timer1 = rt_timer_create("timer1", timeout_10ms,
                              RT_NULL, 10,
                              RT_TIMER_FLAG_PERIODIC);
   if (timer1 != RT_NULL) 
 		rt_timer_start(timer1);	
 	return 0;
 }
-static void timeout1(void *parameter)
+static void timeout_10ms(void *parameter)
 {
 	for(uint8_t i=0;i<16;i++)
 	{

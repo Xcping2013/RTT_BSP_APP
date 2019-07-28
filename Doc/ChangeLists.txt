@@ -1,0 +1,18 @@
+ 
+v2.4 20190709
+
+/*
+---电机回原点不能被电机停止命令打断，即电机回原点中不响应运动命令
+*/
+
+v2.6 20190727
+
+1.去除函数内调用delay_ms,特别是删除定时器内调用
+2.更改部分变量类型static -->  volatile
+3.更改中断优先级 串口3最低    
+4.修改RT_TICK_PER_SECOND---1000和线程优先级																																		-->
+5.增加MSH缓存空间 #define RT_CONSOLEBUF_SIZE 128-->512								---		
+6. overhigh!!!  \r\n --->\n
+7.HAL_SPI_TransmitReceive(&hspi2, &aTxBuffer, &aRxBuffer, 1,5000); 5000->1000
+
+8.spi dma?

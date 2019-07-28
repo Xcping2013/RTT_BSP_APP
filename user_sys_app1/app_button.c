@@ -1,26 +1,27 @@
+/****************************************************************************************/
 //#include "app_button.h"
 //#include "app_sys_control.h"
 #include "bsp_include.h"	
 #include "app_include.h"
 
+/****************************************************************************************/
 
 uint8_t buttonSTARTpressed=FALSE;
 uint8_t buttonRESETpressed=FALSE;
 
 uint8_t buttonSTARTCNT=0;
 uint8_t buttonRESETCNT=0;
-//开始按键和复位按键由上位机控制，底层不封装任何特殊动作
 
+/****************************************************************************************/
 //启动按键可以和启动灯、复位灯一起搭配  	//开始按键自锁 复位按键解锁	
 void buttonSTART_process(uint8_t inCh, uint8_t outCh)
 {
 	if(buttonRESETpressed==FALSE)																									  //电机在复位中，START无效
 	{
-		if( getChInput(inCh)==IN_ON)// && buttonSTARTpressed==FALSE )					
+		if( getChInput(inCh)==IN_ON && buttonSTARTpressed==FALSE )					
 		{
 			buttonSTARTCNT++;
-			//delay_ms(20);		
-			if( buttonSTARTCNT==2)											 																//开始按键
+			if( buttonSTARTCNT>=2)											 																//开始按键
 			{
 				 setChOutput(1,1);	setChOutput(2,0);	
 				 //while(getChInput(inCh)==IN_ON) {;} 																		//等待松开									 									 			
@@ -30,6 +31,7 @@ void buttonSTART_process(uint8_t inCh, uint8_t outCh)
 		}
 		else if( getChInput(inCh)==IN_OFF)
 		{
+			buttonSTARTpressed=FALSE; //由命令下发解锁 改为自动解锁
 			buttonSTARTCNT=0;	
 		}
 	}
@@ -46,21 +48,18 @@ void buttonRESET_process(uint8_t inCh, uint8_t outCh)
 {
 	if( getChInput(inCh)==IN_ON && buttonRESETpressed==FALSE )							
 	{
-		//delay_ms(20);
 		buttonRESETCNT++;
-		//if( getChInput(inCh)==IN_ON )				
-		if( buttonRESETCNT==2)			
+		if( buttonRESETCNT>=2)			
 		{		
-			buttonRESETpressed=TRUE;	setChOutput(outCh,1);	 setChOutput(1,0);	
 			MotorAutoReset_preset();	
 		}
 	}
 	else if( getChInput(inCh)==IN_OFF)
 	{
+		//buttonRESETpressed=FALSE; 复位完成自动解锁
 		buttonRESETCNT=0;	
 	}
 }
-
 int buttonSTART(int argc, char **argv)
 {
 	if(argc==2)
@@ -84,3 +83,6 @@ int buttonSTART(int argc, char **argv)
 }
 	
 MSH_CMD_EXPORT(buttonSTART, status and enable );
+/****************************************************************************************/
+
+

@@ -77,9 +77,9 @@ static void hw_eeprom_debug(void)
 	
   if(Buffercmp((uint8_t*)save_info,(uint8_t*)read_info,len))
   {
-    rt_kprintf("err\r\n>>");
+    rt_kprintf("err\n>>");
   }	
-	else rt_kprintf("ok\r\n>>");
+	else rt_kprintf("ok\n>>");
 }
 
 static void IoTest(void)
@@ -112,7 +112,7 @@ static void board_debug_thread_entry(void *parameter)
     while (1)
     {
 			IoTest();	    
-      rt_thread_delay(5);
+      rt_thread_delay(50);
     }
 }
 static rt_thread_t tid1 = RT_NULL;
@@ -153,7 +153,7 @@ int board_debug_thread_init(void)
                             RT_NULL,
                             sizeof(board_debug_stack),
                             20,
-                            5);
+                            20);
 
 		if (tid1 != RT_NULL)
     {

@@ -1,27 +1,18 @@
-/*  TMCL Instruction
-1-ROR rotate right
-2-ROL rotate left
-3-MST Motor  stop
-4-MVP move to position
-5-SAP set axis parameter
-6-GAP get axis parameter
-7-STAP store axis parameter
-8-RSAP restore axis parameter
-9-SGP set global parameter
-10-SGP get global parameter
-11-STGP store global parameter
-12-RSGP restore global parameter
-13-REF reference search
-14-SIO set output
-15-GIO get input
-*/
+#include <stdlib.h>
+#include "main.h"
+#include "bits.h"
+#include <string.h>
 
-//#include "app_motion.h"
-//#include "app_sys_control.h"
+#include "Commands.h"
+#include "IO.h"
+#include "UART.h"
+#include "SysControl.h"
 
-#include "bsp_include.h"	
-#include "app_include.h"
-
+//后续新命令发送接收都是有小写字符串
+//
+#define CMD_VALID	 		  0
+#define CMD_INVALID	 		1
+#define CMD_PAR_ERROR		2
 /*********************************************************************************************************************/
 
 enum axisParameter {
@@ -500,8 +491,7 @@ static void	printf_cmdList_motor(void)
 		rt_kprintf("motor gohome <axisNum> <speed>        - home sensor as origin position\n");	
 		rt_kprintf("motor golimit <axisNum> <speed>       - limit sensor as origin position\n");	
 		
-		rt_kprintf("motor reset                           - motor reset\n");	
-    rt_kprintf("motor stop reset                      - motor reset\n");	
+		rt_kprintf("motor reset                           - motor reset\n");		
 		rt_kprintf("motor reset?                          - is axis reset or not\n");		
 }
 static void printf_cmdList_motor_set(void)
@@ -607,6 +597,7 @@ uint8_t TMC429_MotorStop(uint8_t motor_number)
   {	
 		/*  立刻停止  */
 		HardStop(motor_number);
+		delay_ms(3);
 		/* 回原点过程中响应停止命令的变量置位 */
 		homeInfo.GoHome[motor_number]=0;
 		homeInfo.GoLimit[motor_number]=0;
@@ -656,30 +647,23 @@ int motor(int argc, char **argv)
 				result =RT_ERROR;//REPLY_INVALID_CMD;
 			}     
 		}
-		if (argc == 3 )
+		if (argc == 3)
 		{
 			CMDGetFromUart.Motor=atoi(argv[2]);
 			if (!strcmp(argv[1], "stop"))
 			{
-				if (!strcmp(argv[2], "reset"))
-				{
-					buttonRESETpressed=FALSE;
-					homeInfo.GoHome[0]=0;
-					homeInfo.GoHome[1]=0;
-					homeInfo.GoHome[2]=0;
-					TMC429_MotorStop(0);TMC429_MotorStop(1);TMC429_MotorStop(2);return RT_EOK;
-				}
-				if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
-				if(CMDGetFromUart.Motor==AXIS_Z) 
-				{	
-					closeSerial();
-				}	
-
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				
 				if(!TMC429_MotorStop(CMDGetFromUart.Motor))	//电机停止后自动会关闭串口打印压力
 				{
 //					homeInfo.GoHome[0]=FALSE;		homeInfo.GoHome[1]=FALSE;		homeInfo.GoHome[2]=FALSE;	
 //					homeInfo.GoLimit[0]=FALSE;	homeInfo.GoLimit[1]=FALSE;	homeInfo.GoLimit[2]=FALSE;						
 //					buttonRESETpressed=FALSE;								  //只要有轴停止啊，就可以开启下次复位功能，复位过去被停止的话									
+					if(CMDGetFromUart.Motor==AXIS_Z) 
+					{	
+						//closeSerial();
+					}
+					delay_ms(1);
 					return RT_EOK	;
 				}
 				result = RT_EINVAL;
@@ -689,82 +673,73 @@ int motor(int argc, char **argv)
 		{	
 			CMDGetFromUart.Motor=atoi(argv[2]);
 			CMDGetFromUart.Value.Int32=atoi(argv[3]);
-		
-			//if(pressureAlarm==0 && buttonRESETpressed==0)
+
+			if (!strcmp(argv[1], "rotate"))
 			{
-				if (!strcmp(argv[1], "rotate"))
+				if(!(TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32)))	return RT_EOK	;
+				result = RT_EINVAL;
+			}
+			if (!strcmp(argv[1], "move") )
+			{
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				else 
 				{
-					if(!(TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32)))	return RT_EOK	;
-					result = RT_EINVAL;
-				}
-				if (!strcmp(argv[1], "move") )
-				{
-					if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is resetting\n");return RT_EOK;}
-					else 
-					{
-						if(!TMC429_MoveToPosition(CMDGetFromUart.Motor,  MVP_REL, CMDGetFromUart.Value.Int32))	return RT_EOK;
-						result =RT_EINVAL;
-					}
-				}
-				if (!strcmp(argv[1], "moveto"))
-				{
-					closeSerial();
-					if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
-					else 
-					{
-						if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
-						result =RT_EINVAL;
-					}
-				}
-				if (!strcmp(argv[1], "gohome"))
-				{
-					closeSerial();
-					if(buttonRESETpressed ==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
-					else
-					{
-						pressureAlarm=0;								//移除压力报警信号
-					
-						//buttonRESETpressed=TRUE;				
-						Stop_HardTimer();		
-			
-						homeInfo.GoHome[CMDGetFromUart.Motor] = TRUE;
-						homeInfo.GoLimit[CMDGetFromUart.Motor]= FALSE;
-						homeInfo.Homed[CMDGetFromUart.Motor]	= FALSE;
-
-						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
-					
-						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
-			
-						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
-						
-						CMD_TRACE("motor[%d] is start go home by searching home sensor\n",CMDGetFromUart.Motor);
-					
-						//电机回原点速度需要保存，下次复位按键需要调用，或者按键默认速度
-					
-						Start_HardTimer();
-					
-						return RT_EOK	;
-					}
-				}
-				if (!strcmp(argv[1], "golimit"))
-				{
-						pressureAlarm=0;
-					
-						Stop_HardTimer();
-					
-						homeInfo.GoHome[CMDGetFromUart.Motor]	=FALSE;
-						homeInfo.GoLimit[CMDGetFromUart.Motor]=TRUE;
-						homeInfo.Homed[CMDGetFromUart.Motor]	=FALSE;
-						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
-						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
-
-						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
-						Start_HardTimer();
-					
-						return RT_EOK	;
+					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor,  MVP_REL, CMDGetFromUart.Value.Int32))	return RT_EOK;
+					result =RT_EINVAL;
 				}
 			}
-			if (!strcmp(argv[1], "get"))
+			if (!strcmp(argv[1], "moveto"))
+			{
+				if(buttonRESETpressed!=FALSE) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				else 
+				{
+					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
+					result =RT_EINVAL;
+				}
+			}
+			if (!strcmp(argv[1], "gohome"))
+			{
+					pressureAlarm=0;								//移除压力报警信号
+				
+				  //buttonRESETpressed=TRUE;				
+					Stop_HardTimer();		
+		
+					homeInfo.GoHome[CMDGetFromUart.Motor] = TRUE;
+				  homeInfo.GoLimit[CMDGetFromUart.Motor]= FALSE;
+					homeInfo.Homed[CMDGetFromUart.Motor]	= FALSE;
+
+					homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
+				
+					SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+		
+				  TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+					
+					CMD_TRACE("motor[%d] is start go home by searching home sensor\n",CMDGetFromUart.Motor);
+				
+				  //电机回原点速度需要保存，下次复位按键需要调用，或者按键默认速度
+				
+					Start_HardTimer();
+				
+					return RT_EOK	;
+			}
+			if (!strcmp(argv[1], "golimit"))
+			{
+					pressureAlarm=0;
+				
+					Stop_HardTimer();
+				
+				  homeInfo.GoHome[CMDGetFromUart.Motor]	=FALSE;
+					homeInfo.GoLimit[CMDGetFromUart.Motor]=TRUE;
+					homeInfo.Homed[CMDGetFromUart.Motor]	=FALSE;
+					homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
+					SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+
+				  TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+					Start_HardTimer();
+				
+					return RT_EOK	;
+			}
+			else if (!strcmp(argv[1], "get"))
 			{
 				if (!strcmp(argv[2], "speed")) 	 					CMDGetFromUart.Type=actual_speed;
 				if (!strcmp(argv[2], "position")) 				CMDGetFromUart.Type=actual_position;
@@ -902,7 +877,7 @@ static void motion_thread_entry(void *parameter)
 				}
 			}
 
-			rt_thread_delay(10);
+			rt_thread_delay(1);
 		}		
 }
 int MotorLimitCheck_thread_init(void)
@@ -917,7 +892,7 @@ int MotorLimitCheck_thread_init(void)
                             (rt_uint8_t *)&motion_stack[0],
                             sizeof(motion_stack),
                             25,
-                            20);
+                            5);
     if (result == RT_EOK)
     {
        rt_thread_startup(&motion_thread);
@@ -926,6 +901,75 @@ int MotorLimitCheck_thread_init(void)
 }
 
 //
+
+uint8_t  getCMD_tmc429(char *string)
+{
+	int result = RT_ERROR;
+	CMDGetFromUart.Type=Type_none;
+	TMC429_ParameterGet.Status=REPLY_OK;
+	
+	if(!strcmp(string,"motor"))			 {  printf_cmdList_motor(); 			return CMD_VALID;	}
+	if(!strcmp(string,"motor get"))	 {	printf_cmdList_motor_get();		return CMD_VALID;	}
+	if(!strcmp(string,"motor set"))	 {	printf_cmdList_motor_set();		return CMD_VALID;	}
+	
+	if(strncmp(string,"motor get ",10)==0 ) 
+	{
+		char *p = NULL;
+		char *type_str = &Commands[10];	
+		
+		if(strncmp(type_str,"speed ",6)==0 )
+		{
+			char *s = &type_str[6];
+			CMDGetFromUart.Motor=
+		}
+			
+		CMDGetFromUart.Motor=string[19]-'0';
+		if(CMDGetFromUart.Motor<N_O_MOTORS)
+		{
+			MotorConfig[ActualMotor].XACTUAL=Read429Int(IDX_XACTUAL|(ActualMotor<<5));
+			UART_Printf("P[%d]<%d>\n",ActualMotor,MotorConfig[ActualMotor].XACTUAL);
+			//UART_Printf("P[%d]=%d\r\n",ActualMotor,MotorConfig[ActualMotor].XACTUAL);
+			return 1;
+		}
+		UART_SendStr("<NA>\n");return 1;
+	}
+	if(strcmp("motor reset",Commands)==0)
+  {
+		UART_SendStr(">>");
+		KEY_RESET_pressed=1;
+		MotorHoming_preset(ProID);	
+//		if(ProID==BUTTON_OFFLINE)	MotorHoming();
+//		if(ProID==BUTTON_VER3)	MotorHoming_ver3();
+//		if(ProID==BUTTON_ROAD)	MotorHoming_preset_Road();
+		//UART_SendStr("<OK>\n");
+		return 1;
+  }
+	if(strcmp("is start",Commands)==0)
+  {
+		if(KEY_START_pressed) UART_SendStr("START<OK>\n");
+		else 									UART_SendStr("START<NO>\n");
+		return 1;
+  }	
+	if(strcmp("is alarm",Commands)==0)
+  {
+		if(pressureAlarm) 	  UART_SendStr("alarm<1>\n");
+		else 									UART_SendStr("alarm<0>\n");
+		return 1;
+  }	
+	else if(strcmp("test over",Commands)==0)
+  {
+		KEY_START_pressed=0;
+		OUTPUT1=0;
+		UART_SendStr("<OK>\n");
+		return 1;
+  }
+	else return 0;
+}
+
+
+
+//
+
 
 
 

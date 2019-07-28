@@ -1,14 +1,5 @@
-/*			NVIC SET
-
-HAL_NVIC_SetPriority(irqmap->irqno, 4, 0);
-HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
-HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
-HAL_NVIC_SetPriority(USART2_IRQn, 6, 0);
-HAL_NVIC_SetPriority(USART3_IRQn, 6, 0);
-HAL_NVIC_SetPriority(TIM1_UP_IRQn, 6, 0);
-
-不要搞太多的全局变量，独立性
-
+/*			NVIC SET  线程优先级
+											
 */
 
 #include "bsp_include.h"	
@@ -32,6 +23,9 @@ HAL_NVIC_SetPriority(TIM1_UP_IRQn, 6, 0);
 复位内移除定时器内的delay，调用delay时先停止定时器
 优化回原点动作，回原点的时候，不响应stop命令
 
+移除其他不恰当的delay；
+在外部中断和电机停止命令中先 关闭压力采集串口
+
 */
 #if defined(USING_INC_MBTMC429) 	//#define RT_USING_UART3
 
@@ -49,15 +43,16 @@ int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 {		
 	SysRunLed_thread_init();
 	
-//	dido_hw_init();					//add in8 as exit
 	at24cxx_hw_init();
 	
 	tmc429_hw_init();
 	
 	MotorSensorCheck_timer_init();	
 	//MotorLimitCheck_thread_init();
-
+#if defined(RT_USING_UART3)
+#else
 	MX_USART3_UART_Init();
+#endif
 	uart_stream_thread_init();	
 
 	dido_hw_init();					//add in8 as exit  防止程序未进入系统却开始响应 复位按键命令 从而死机

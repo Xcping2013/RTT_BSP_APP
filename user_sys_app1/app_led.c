@@ -26,7 +26,7 @@ static void led_thread_entry(void *parameter)
 			#if defined(USING_IN8_EXIT)	
 				if(pressureAlarm==1)
 				{
-					CMD_TRACE("stop motor z due to pressure overhigh!!!\r\n>>");
+					CMD_TRACE("stop motor z due to pressure overhigh!!!\n>>");
 				}
 			#endif
         rt_thread_delay(RT_TICK_PER_SECOND / 4); /* sleep 0.5 second and switch to other thread */
@@ -45,7 +45,7 @@ int SysRunLed_thread_init(void)
                             (rt_uint8_t *)&led_stack[0],
                             sizeof(led_stack),
                             20,
-                            5);
+                            20);
     if (result == RT_EOK)
     {
        rt_thread_startup(&led_thread);
@@ -200,7 +200,7 @@ static void led_allOn_One2Left(rt_uint8_t led_no)
 }
 //
 /* 定时器1超时函数 */
-static void timeout1(void *parameter)
+static void timeout_10ms(void *parameter)
 {
 	//rt_tick_t timeout = 300;
 	rt_uint8_t i;
@@ -249,7 +249,7 @@ int timer_led_init(void)
 {
     /* 创建定时器1 */
     timer1 = rt_timer_create("timerLEDS1", /* 定时器名字是 timer1 */
-                             timeout1, /* 超时时回调的处理函数 */
+                             timeout_10ms, /* 超时时回调的处理函数 */
                              RT_NULL, /* 超时函数的入口参数 */
                              10, /* 定时长度，以OS Tick为单位，即10个OS Tick */
                              RT_TIMER_FLAG_PERIODIC|RT_TIMER_FLAG_SOFT_TIMER); /* 周期性定时器 */

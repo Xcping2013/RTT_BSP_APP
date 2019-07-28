@@ -11,7 +11,7 @@
 #ifndef __COMMANDS_H
 #define	__COMMANDS_H
 
-uint8_t  ProcessCommand(char  *Commands);
+uint8_t  Command_Analysis_Process(char  *Commands);
 //IO
 uint8_t  CommmandLine_in(char *Commands);
 uint8_t  CommmandLine_out(char *Commands);

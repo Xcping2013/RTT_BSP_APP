@@ -10,7 +10,10 @@
 /* USER CODE BEGIN Includes */
 #include "bsp_defines.h"
 /* USER CODE END Includes */
-#define USING_IN8_EXIT
+	 	 
+#define ENABLE_DEBUG_CODE	0
+	 
+#define USING_IN8_EXIT	1
 	 
 /* USER CODE BEGIN Private defines */
 #define	CMD_RESPONSE_EN	1
@@ -119,7 +122,7 @@ extern uint8_t pressureAlarm;
 extern uint8_t homeSensorPin[3];
 extern int motorPosition[3];
 extern uint8_t motorsReset_InOrder;
-extern uint8_t HardTimer_StartStop;
+extern volatile uint8_t HardTimer_StartStop;
 
 int ParamSave(int argc, char **argv);
 
