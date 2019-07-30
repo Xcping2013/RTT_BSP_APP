@@ -57,7 +57,7 @@ static void serial_thread_entry(void *parameter);
 /**********************************************************************************************************************/
 void  openSerial(void)
 {
-	if(SerialOpened==FALSE && Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) !=0)	
+	//if(SerialOpened==FALSE && Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) !=0)	
 	//if(SerialOpened==FALSE)	
 	//if(Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) !=0)	
 	{		
@@ -74,7 +74,7 @@ void  openSerial(void)
 
 void  closeSerial(void)
 {
-	if(SerialOpened==TRUE)	
+	//if(SerialOpened==TRUE)	
 	{
 		#if defined(RT_USING_UART3)
 				rt_device_control(serial, RT_DEVICE_CTRL_CLR_INT, NULL);	
@@ -96,6 +96,20 @@ int printdata(int argc, char **argv)
 	}	
 	AxisSpeedKeepZeroCnt=0;
 	openSerial();
+	return 0;
+}
+int printdata_disable(int argc, char **argv)
+{
+	if (argc !=2)
+	{
+		CMD_TRACE("Please input: stop printdata\n");
+		return RT_ERROR;
+	}	
+	if (!strcmp(argv[1], "printdata"))
+	{
+		closeSerial();
+		printf("stop printing the pressure value ok\n");		
+	}
 	return 0;
 }
 /**********************************************************************************************************************/

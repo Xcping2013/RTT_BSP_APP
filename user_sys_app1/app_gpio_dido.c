@@ -319,40 +319,41 @@ int rgb(int argc, char **argv)
 //MSH_CMD_EXPORT(output_flashing, start or stop output flashing);
 //MSH_CMD_EXPORT(rgb_pin_num, set the rgb_pin_num led);
 /**/
-//pressureAlarm
 
+/*   *		*		*		*		Pressure alarm input8 interrupts collection		   *		*		*		*	
+*   *		*		*		*	   *		*		*		*	   *		*		*		*	   *		*		*		*	   *		*	  */
 uint8_t pressureAlarm=0;
 
-void alarm_on(void *args)
+void EXTI_CallBack_Fun(void *args)
 {
-	if(INPUT8==0 && buttonRESETpressed==0 )	 	
+	if(INPUT8==1 )						//Alarm signal remove
 	{			
-
+		pressureAlarm = FALSE;
+		CMD_TRACE("pressure alarm signal remove\n");	
+	} 
+	if(INPUT8==0)	 							//Alarm signal received
+	{			
+		pressureAlarm	=	TRUE;
+		
 		closeSerial();
-
-		HardStop(2);
-
-		homeInfo.Homed[2]=FALSE;
-		homeInfo.GoHome[2]=FALSE;	
-		homeInfo.GoLimit[2]=FALSE;	
-		//pressureAlarm=1;
-		CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+		
+		if(homeInfo.GoHome[2]==TRUE && homeInfo.HomeSpeed[2]<0)
+		{
+			TMC429_MotorRotate(2,homeInfo.HomeSpeed[2]);			//ÏòÉÏ		
+		}
+		else
+		{
+			HardStop(2);	
+			CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+		}
 	} 
 }
-
+//drv_gpio	stm32_pin_irq_enable	GPIO_NOPULL-->GPIO_PULLUP
 void InitIn8AsExti(void)
 {
-  rt_pin_attach_irq(inputs_pin_num[8-1], PIN_IRQ_MODE_FALLING, alarm_on, RT_NULL);
+  rt_pin_attach_irq(inputs_pin_num[8-1], PIN_IRQ_MODE_RISING_FALLING, EXTI_CallBack_Fun, RT_NULL);
 	rt_pin_irq_enable(inputs_pin_num[8-1], PIN_IRQ_ENABLE);
 }
-void alarm_clear(void *args)
-{
-	pressureAlarm=0;
-}
-MSH_CMD_EXPORT(alarm_clear, ......);
-
-
-
 
 
 //

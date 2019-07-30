@@ -45,9 +45,9 @@ int mbtmc429_hw_init(void)		//thread: led; uart1; uart3
 	
 	at24cxx_hw_init();
 	
-	tmc429_hw_init();
-	
 	MotorSensorCheck_timer_init();	
+	
+	tmc429_hw_init();
 	//MotorLimitCheck_thread_init();
 #if defined(RT_USING_UART3)
 #else
@@ -91,6 +91,7 @@ MSH_CMD_EXPORT(readdata, read data from page 1~200);
 MSH_CMD_EXPORT(reboot, cpu reboot);
 MSH_CMD_EXPORT(motor, control motor motion by commands);
 MSH_CMD_EXPORT(printdata, auto print position and press);
+MSH_CMD_EXPORT_ALIAS(printdata_disable,stop, stop print position and press);
 MSH_CMD_EXPORT(ParamSave, save parameter as set and load it after board restart);
 
 static void hw_in_out_debug(void)

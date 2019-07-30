@@ -501,7 +501,7 @@ static void	printf_cmdList_motor(void)
 		rt_kprintf("motor golimit <axisNum> <speed>       - limit sensor as origin position\n");	
 		
 		rt_kprintf("motor reset                           - motor reset\n");	
-    rt_kprintf("motor stop reset                      - motor reset\n");	
+		rt_kprintf("motor stop reset                      - motor reset\n");	
 		rt_kprintf("motor reset?                          - is axis reset or not\n");		
 }
 static void printf_cmdList_motor_set(void)
@@ -669,7 +669,7 @@ int motor(int argc, char **argv)
 					homeInfo.GoHome[2]=0;
 					TMC429_MotorStop(0);TMC429_MotorStop(1);TMC429_MotorStop(2);return RT_EOK;
 				}
-				if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
+				if(buttonRESETpressed==TRUE || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
 				if(CMDGetFromUart.Motor==AXIS_Z) 
 				{	
 					closeSerial();
@@ -689,81 +689,6 @@ int motor(int argc, char **argv)
 		{	
 			CMDGetFromUart.Motor=atoi(argv[2]);
 			CMDGetFromUart.Value.Int32=atoi(argv[3]);
-		
-			//if(pressureAlarm==0 && buttonRESETpressed==0)
-			{
-				if (!strcmp(argv[1], "rotate"))
-				{
-					if(!(TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32)))	return RT_EOK	;
-					result = RT_EINVAL;
-				}
-				if (!strcmp(argv[1], "move") )
-				{
-					if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is resetting\n");return RT_EOK;}
-					else 
-					{
-						if(!TMC429_MoveToPosition(CMDGetFromUart.Motor,  MVP_REL, CMDGetFromUart.Value.Int32))	return RT_EOK;
-						result =RT_EINVAL;
-					}
-				}
-				if (!strcmp(argv[1], "moveto"))
-				{
-					closeSerial();
-					if(buttonRESETpressed==1 || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
-					else 
-					{
-						if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
-						result =RT_EINVAL;
-					}
-				}
-				if (!strcmp(argv[1], "gohome"))
-				{
-					closeSerial();
-					if(buttonRESETpressed ==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
-					else
-					{
-						pressureAlarm=0;								//移除压力报警信号
-					
-						//buttonRESETpressed=TRUE;				
-						Stop_HardTimer();		
-			
-						homeInfo.GoHome[CMDGetFromUart.Motor] = TRUE;
-						homeInfo.GoLimit[CMDGetFromUart.Motor]= FALSE;
-						homeInfo.Homed[CMDGetFromUart.Motor]	= FALSE;
-
-						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
-					
-						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
-			
-						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
-						
-						CMD_TRACE("motor[%d] is start go home by searching home sensor\n",CMDGetFromUart.Motor);
-					
-						//电机回原点速度需要保存，下次复位按键需要调用，或者按键默认速度
-					
-						Start_HardTimer();
-					
-						return RT_EOK	;
-					}
-				}
-				if (!strcmp(argv[1], "golimit"))
-				{
-						pressureAlarm=0;
-					
-						Stop_HardTimer();
-					
-						homeInfo.GoHome[CMDGetFromUart.Motor]	=FALSE;
-						homeInfo.GoLimit[CMDGetFromUart.Motor]=TRUE;
-						homeInfo.Homed[CMDGetFromUart.Motor]	=FALSE;
-						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
-						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
-
-						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
-						Start_HardTimer();
-					
-						return RT_EOK	;
-				}
-			}
 			if (!strcmp(argv[1], "get"))
 			{
 				if (!strcmp(argv[2], "speed")) 	 					CMDGetFromUart.Type=actual_speed;
@@ -806,7 +731,73 @@ int motor(int argc, char **argv)
 					printf_cmdList_motor_get();
 					result =REPLY_INVALID_CMD;
 				}
+			}		
+			//报警后所有的正向运动都屏蔽
+			if(pressureAlarm == TRUE && CMDGetFromUart.Value.Int32>0 && CMDGetFromUart.Motor==2 )  
+			{
+				CMD_TRACE("pressure overhigh, motor z is forbidden to move downward\n");	
+				return RT_EOK;				
 			}
+			//复位状态下屏蔽电机运行控制
+			else if(buttonRESETpressed==TRUE )
+			{	
+				CMD_TRACE("motor is resetting\n");
+				return RT_EOK;
+			}
+			else 
+			{
+				if (!strcmp(argv[1], "rotate"))
+				{
+					if(!(TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32)))	return RT_EOK	;
+					result = RT_EINVAL;
+				}
+				if (!strcmp(argv[1], "move") )
+				{			
+						if(!TMC429_MoveToPosition(CMDGetFromUart.Motor,  MVP_REL, CMDGetFromUart.Value.Int32))	return RT_EOK;
+						result =RT_EINVAL;
+				}
+				if (!strcmp(argv[1], "moveto"))
+				{
+					closeSerial();
+					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
+					result =RT_EINVAL;
+				}
+				if (!strcmp(argv[1], "gohome"))
+				{
+						closeSerial();
+						
+						Stop_HardTimer();		
+			
+						homeInfo.GoHome[CMDGetFromUart.Motor] = TRUE;
+						homeInfo.GoLimit[CMDGetFromUart.Motor]= FALSE;
+						homeInfo.Homed[CMDGetFromUart.Motor]	= FALSE;
+
+						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
+					
+						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+			
+						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+						
+						CMD_TRACE("motor[%d] is start go home by searching home sensor\n",CMDGetFromUart.Motor);
+										
+						Start_HardTimer();
+					
+						return RT_EOK	;
+				}
+				if (!strcmp(argv[1], "golimit"))
+				{			
+						Stop_HardTimer();					
+						homeInfo.GoHome[CMDGetFromUart.Motor]	=FALSE;
+						homeInfo.GoLimit[CMDGetFromUart.Motor]=TRUE;
+						homeInfo.Homed[CMDGetFromUart.Motor]	=FALSE;
+						homeInfo.HomeSpeed[CMDGetFromUart.Motor]=CMDGetFromUart.Value.Int32;	
+						SetAmaxAutoByspeed(CMDGetFromUart.Motor,abs(CMDGetFromUart.Value.Int32));
+						TMC429_MotorRotate(CMDGetFromUart.Motor,CMDGetFromUart.Value.Int32);
+						Start_HardTimer();					
+						return RT_EOK	;
+				}
+			}	
+
 		}
 		else if (argc == 5)
 		{

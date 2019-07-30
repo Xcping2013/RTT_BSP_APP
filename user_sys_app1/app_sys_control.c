@@ -65,6 +65,8 @@ void reboot(void)
 UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
 {
 	u8 aRxBuffer=0;
+//	if(HardTimer_StartStop==1)
+//		HAL_TIM_Base_Stop_IT(&htim1);
   switch(DeviceNumber)
   {
     case SPI_DEV_TMC429:
@@ -78,6 +80,8 @@ UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
     default:	
       return 0;
   }
+//	if(HardTimer_StartStop==1)
+//		HAL_TIM_Base_Start_IT(&htim1);
 }
 
 UCHAR ReadWriteSPI2(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
@@ -377,8 +381,6 @@ void MotorAutoReset_preset( void )
 	closeSerial();
 	
 	buttonRESETpressed=TRUE;	setChOutput(2,1);	 setChOutput(1,0);	
-	
-	pressureAlarm=0;
 	
 	Stop_HardTimer();	
 	motorsReset_InOrder=TRUE;
