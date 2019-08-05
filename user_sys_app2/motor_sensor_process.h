@@ -13,9 +13,12 @@ typedef struct
 
 extern homeInfo_t homeInfo;
 
-void setPositionAsOrigin(uint8_t axisNum);
-void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed);
+extern uint8_t motorsReset_InOrder;
+
+void MotorAutoReset_preset( void );
+
 void MotorHomingWithLimitSwitch(uint8_t axisNum, int HomeSpeed);
+void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed);
 
 #endif
 

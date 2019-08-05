@@ -1,5 +1,41 @@
-/*			NVIC SET  线程优先级
-											
+/*			控制卡功能说明
+
+1. 命令交互采集输入控制输出：
+2. 命令交互EEPROM存取
+3. 电机操作
+
+项目系统控制：
+
+road: 
+	只要电机处于向下运动（目标位置大于当前位置 | 当前速度>0 ）采集到报警信号,电机里面停止
+	
+	Z轴电机回原 > 电机停止 > 报警信号	> 运动命令
+
+
+*/
+/*	压力报警的安全监控
+
+1.	IN8中断  电机停止 停止后屏蔽向下运动							H->L 触发一次,不管方向运动  复位L-H 不影响
+
+																									  moveto命令先进行目标位置判断	
+ 
+2.	打印串口3压力值 判断是否为向下运动并触发报警    非复位状态下目标位置判断
+
+3.  任务采集报警输入电平,正转触发，立刻停止					当前速度判断,reset速度<0 不影响
+
+
+
+*/
+/*			线程
+serial_thread_entry				
+main_thread_entry
+finsh_thread_entry
+board_debug_thread_entry
+
+led_thread_entry
+motion_thread_entry
+finsh_thread_entry
+code_test_thread_entry
 */
 
 #include "bsp_include.h"	

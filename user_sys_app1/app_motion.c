@@ -101,7 +101,7 @@ static uint8_t MotorStopByLimit[N_O_MOTORS]={ENABLE,ENABLE,ENABLE};								//Åöµ
 		
 /*********************************************************************************************************************/
 static void 		TMC429_ParameterPresetToRam(void);
-static uint8_t 	TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, int32_t position);
+static uint8_t 		TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, int32_t position);
 
 static void 		TMC429_GetAxisParameter(uint8_t motor_number, uint8_t parameter_type);
 static void 		TMC429_SetAxisParameter(uint8_t motor_number, uint8_t parameter_type, int32_t parameter_value);
@@ -149,29 +149,29 @@ static uint8_t TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, 
       if(SpeedChangedFlag[motor_number])
       {
         Write429Short(IDX_VMAX|(motor_number<<5), MotorConfig[motor_number].VMax);
-				SetAmaxAutoByspeed(motor_number,MotorConfig[motor_number].VMax);
+			  SetAmaxAutoByspeed(motor_number,MotorConfig[motor_number].VMax);
         SpeedChangedFlag[motor_number]=FALSE;
       }
       if(motion_mode==MVP_ABS)
-			{
+	  {
 				CMD_TRACE("motor[%d] is start to make absolute motion\n",motor_number);
         Write429Int(IDX_XTARGET|(motor_number<<5), position);
-			}
+	  }
       else
-			{
+	 {
 				CMD_TRACE("motor[%d] is start to make relative motion\n",motor_number);
         Write429Int(IDX_XTARGET|(motor_number<<5), position + Read429Int(IDX_XACTUAL|(motor_number<<5)));
-			}
+	 }
       Set429RampMode(motor_number, RM_RAMP);
-			return 0;
+	 return 0;
     }
     else 
-		{
-			return 1;
-		}
+	{
+		return 1;
+	}
   }
   else TMC429_ParameterGet.Status=REPLY_INVALID_VALUE;
-	return 1;
+  return 1;
 }
 
 
@@ -183,14 +183,11 @@ static uint8_t TMC429_MoveToPosition(uint8_t motor_number, uint8_t motion_mode, 
   GAP (Get Axis Parameter) command (see TMCL manual).
 ********************************************************************/
 static void TMC429_GetAxisParameter(uint8_t motor_number, uint8_t parameter_type)
-{
-		
+{	
   TMC429_ParameterGet.Value.Int32=0;
 	
   if(motor_number < N_O_MOTORS)	
   {
-
-		
     switch(parameter_type)
     {
       case next_position:
@@ -323,9 +320,6 @@ static void TMC429_GetAxisParameter(uint8_t motor_number, uint8_t parameter_type
     }
   } else TMC429_ParameterGet.Status=REPLY_INVALID_VALUE;
 }
-
-
-
 static void TMC429_SetAxisParameter(uint8_t motor_number, uint8_t parameter_type, int32_t parameter_value)
 {
   UCHAR Read[4], Write[4];
@@ -550,7 +544,7 @@ static void printf_cmdList_motor_get(void)
 void  tmc429_hw_init(void)
 {
 	pinMode(POSCMP1_PIN, PIN_MODE_INPUT_PULLUP);
-  pinMode(INTOUT1_PIN, PIN_MODE_INPUT_PULLUP);	
+    pinMode(INTOUT1_PIN, PIN_MODE_INPUT_PULLUP);	
 	
 	MX_SPI_Init();
 	
@@ -588,12 +582,17 @@ uint8_t TMC429_MotorRotate(uint8_t motor_number, int32_t motor_speed)
 		
     Set429RampMode(motor_number, RM_VELOCITY);
 		
+	SetAmaxAutoByspeed(motor_number,abs(motor_speed));
+	  
     Write429Short(IDX_VMAX|(motor_number<<5), 2047);
+	  
     Write429Short(IDX_VTARGET|(motor_number<<5), motor_speed);
-		//rt_kprintf("motor%d is rotate at %d\n",motor_number,motor_speed);
-		return 0;	
+	
+
+	rt_kprintf("motor%d is rotate at %d\n",motor_number,motor_speed);
+	return 0;	
   }
-	return 1;
+  return 1;
 }
 /***************************************************************//**
   \fn MotorStop(void)
@@ -607,6 +606,7 @@ uint8_t TMC429_MotorStop(uint8_t motor_number)
   {	
 		/*  Á¢¿ÌÍ£Ö¹  */
 		HardStop(motor_number);
+		//StopMotorByRamp(motor_number);
 		/* »ØÔ­µã¹ý³ÌÖÐÏìÓ¦Í£Ö¹ÃüÁîµÄ±äÁ¿ÖÃÎ» */
 		homeInfo.GoHome[motor_number]=0;
 		homeInfo.GoLimit[motor_number]=0;
@@ -621,14 +621,17 @@ void StopMotorByRamp(UINT Motor)
   Set429RampMode(MOTOR_NUMBER(Motor), RM_VELOCITY);
   Write429Zero((MOTOR_NUMBER(Motor)<<5)|IDX_VTARGET);
 }
+
+uint8_t SPI_LockByCMD=0;
+
 int motor(int argc, char **argv)
 {
-	  CMDGetFromUart.Type=Type_none;
+	 CMDGetFromUart.Type=Type_none;
 	
-		TMC429_ParameterGet.Status=REPLY_OK;
+	 TMC429_ParameterGet.Status=REPLY_OK;
 	
     int result = RT_ERROR;
-	
+		
 		if (argc == 2 )
 		{
 			if (!strcmp(argv[1], "reset?"))
@@ -667,7 +670,7 @@ int motor(int argc, char **argv)
 					homeInfo.GoHome[0]=0;
 					homeInfo.GoHome[1]=0;
 					homeInfo.GoHome[2]=0;
-					TMC429_MotorStop(0);TMC429_MotorStop(1);TMC429_MotorStop(2);return RT_EOK;
+					StopMotorByRamp(0);StopMotorByRamp(1);StopMotorByRamp(2);return RT_EOK;//TMC429_MotorStop(2);
 				}
 				if(buttonRESETpressed==TRUE || homeInfo.GoHome[2]==1) {CMD_TRACE("motor is reseting\n");return RT_EOK;}
 				if(CMDGetFromUart.Motor==AXIS_Z) 
@@ -733,13 +736,13 @@ int motor(int argc, char **argv)
 				}
 			}		
 			//±¨¾¯ºóËùÓÐµÄÕýÏòÔË¶¯¶¼ÆÁ±Î
-			if(pressureAlarm == TRUE && CMDGetFromUart.Value.Int32>0 && CMDGetFromUart.Motor==2 )  
-			{
-				CMD_TRACE("pressure overhigh, motor z is forbidden to move downward\n");	
-				return RT_EOK;				
-			}
+//			if(pressureAlarm == TRUE && CMDGetFromUart.Value.Int32>0 && CMDGetFromUart.Motor==2 )  
+//			{
+//				CMD_TRACE("pressure overhigh, motor z is forbidden to move downward\n");	
+//				return RT_EOK;				
+//			}
 			//¸´Î»×´Ì¬ÏÂÆÁ±Îµç»úÔËÐÐ¿ØÖÆ
-			else if(buttonRESETpressed==TRUE )
+			if(buttonRESETpressed==TRUE )
 			{	
 				CMD_TRACE("motor is resetting\n");
 				return RT_EOK;
@@ -758,6 +761,14 @@ int motor(int argc, char **argv)
 				}
 				if (!strcmp(argv[1], "moveto"))
 				{
+					if( (pressureAlarm == TRUE || INPUT8==0 )  &&  CMDGetFromUart.Motor==2 )  
+					{
+						if(CMDGetFromUart.Value.Int32 > Read429Int(IDX_XACTUAL|(CMDGetFromUart.Motor<<5)))
+						{
+							CMD_TRACE("pressure overhigh, motor z is forbidden to move downward\n");	
+							return RT_EOK;				
+						}
+					}
 					closeSerial();
 					if(!TMC429_MoveToPosition(CMDGetFromUart.Motor, MVP_ABS, CMDGetFromUart.Value.Int32))	return RT_EOK;
 					result =RT_EINVAL;

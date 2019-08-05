@@ -63,18 +63,6 @@ extern PARAM_T g_tParam;
 #define MVP_REL   1            //!< relative movement (with MVP command)
 #define MVP_COORD 2            //!< coordinate movement (with MVO command)
 
-//TMCL status codes
-#define REPLY_OK 100                //!< command successfully executed
-#define REPLY_CHKERR 1              //!< checksum error
-#define REPLY_INVALID_CMD 2         //!< command not supported
-#define REPLY_WRONG_TYPE 3          //!< wrong type code
-#define REPLY_INVALID_VALUE 4       //!< wrong value
-#define REPLY_EEPROM_LOCKED 5       //!< EEPROM is locked
-#define REPLY_CMD_NOT_AVAILABLE 6   //!< command not available due to current state
-#define REPLY_CMD_LOAD_ERROR 7      //!< error when storing command to EEPROM
-#define REPLY_WRITE_PROTECTED 8     //!< EEPROM is write protected
-#define REPLY_MAX_EXCEEDED 9        //!< maximum number of commands in EEPROM exceeded
-
 /* USER CODE END Private defines */
 //! Motor configuration data
 typedef struct
@@ -117,7 +105,7 @@ void reboot(void);
 void LoadParamFromEeprom(void);
 void SaveParamToEeprom(void);
 
-extern uint8_t pressureAlarm;
+extern volatile uint8_t pressureAlarm;
 
 extern uint8_t homeSensorPin[3];
 extern int motorPosition[3];
@@ -135,6 +123,9 @@ void MotorAutoReset_preset( void );
 void MotorSensorCheck_timer_init(void);
 void SetAmaxAutoByspeed(u8 axisNum,int speed);
 void get_motor_position(void);
+
+
+int IN8_thread_init(void);
 
 /* USER CODE END Prototypes */
 

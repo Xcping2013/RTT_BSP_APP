@@ -41,6 +41,8 @@ stop motor z due to pressure overhigh!!!\n
 
 
 /**********************************************************************************************************************/
+static uint16_t input8Cnt=0;
+static int next_posititon=0;	//uint32 负位置会出现错误
 static struct rt_semaphore rx_sem;	
 
 static uint8_t DataRemoveCnt=0;					//第一個字符串有可能不全
@@ -95,6 +97,7 @@ int printdata(int argc, char **argv)
 		return RT_ERROR;
 	}	
 	AxisSpeedKeepZeroCnt=0;
+	next_posititon=Read429Int(IDX_XTARGET|(2<<5));				
 	openSerial();
 	return 0;
 }
@@ -146,8 +149,14 @@ static void serial3_data_processing(void)
 		AxisSpeedKeepZeroCnt=0;
 		if(DataRemoveCnt<2)	DataRemoveCnt++;
 		else 
-		{
+		{			
 			motorPosition[AXIS_Z]=Read429Int(IDX_XACTUAL|(AXIS_Z<<5));
+			if(next_posititon > motorPosition[AXIS_Z] && buttonRESETpressed==FALSE)
+			{
+				if(INPUT8==0) input8Cnt++; else input8Cnt=0;
+			
+				if(input8Cnt>=3) {HardStop(2);input8Cnt=0;}
+			}
 			rt_kprintf("P[2]=%d,Press%s\n",motorPosition[AXIS_Z],&uart_rx_buff);			
 			
 		}
@@ -171,10 +180,12 @@ static void serial_thread_entry(void *parameter)
     char ch;
     while (1)
     {
+				
         while (rt_device_read(serial, -1, &ch, 1) != 1)
         {
             rt_sem_take(&rx_sem, RT_WAITING_FOREVER);
         }	
+				rt_enter_critical();
 				if(ch==0x0d || ch==0x0d) 
 				{
 					if(uart_rx_len_index!=0)
@@ -188,7 +199,8 @@ static void serial_thread_entry(void *parameter)
 						uart_rx_len_index++;
 					}
 					if(uart_rx_len_index > uart_rx_len_max) uart_rx_len_index=0; 
-				}		 
+				}	
+				rt_exit_critical();				
     }
 }
 //

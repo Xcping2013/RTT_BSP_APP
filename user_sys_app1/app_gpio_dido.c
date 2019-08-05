@@ -87,12 +87,15 @@ void dido_hw_init(void)
 	} 
 	timer_10ms_init();
 
-	if(g_tParam.Project_ID!=AOI_2AXIS || g_tParam.Project_ID!=COMMON || g_tParam.Project_ID!=LIDOPEN)
+	if(g_tParam.Project_ID==BUTTON_ROAD || g_tParam.Project_ID==OQC_FLEX)
 	{
 	
-	
 #if defined(USING_IN8_EXIT)	
+		
 	InitIn8AsExti();
+		
+	IN8_thread_init();
+		
 #endif
 		
 	}
@@ -234,7 +237,7 @@ static int timer_10ms_init(void)
 }
 static void timeout_10ms(void *parameter)
 {
-	if(g_tParam.Project_ID!=AOI_2AXIS || g_tParam.Project_ID!=COMMON || g_tParam.Project_ID!=LIDOPEN)
+	if(g_tParam.Project_ID==BUTTON_ROAD || g_tParam.Project_ID==OQC_FLEX)
 	{
 		buttonSTART_process(1,1);
 		buttonRESET_process(2,2);	
@@ -322,31 +325,41 @@ int rgb(int argc, char **argv)
 
 /*   *		*		*		*		Pressure alarm input8 interrupts collection		   *		*		*		*	
 *   *		*		*		*	   *		*		*		*	   *		*		*		*	   *		*		*		*	   *		*	  */
-uint8_t pressureAlarm=0;
+volatile uint8_t pressureAlarm=0;
 
 void EXTI_CallBack_Fun(void *args)
 {
-	if(INPUT8==1 )						//Alarm signal remove
-	{			
-		pressureAlarm = FALSE;
-		CMD_TRACE("pressure alarm signal remove\n");	
-	} 
 	if(INPUT8==0)	 							//Alarm signal received
-	{			
-		pressureAlarm	=	TRUE;
-		
-		closeSerial();
-		
-		if(homeInfo.GoHome[2]==TRUE && homeInfo.HomeSpeed[2]<0)
-		{
-			TMC429_MotorRotate(2,homeInfo.HomeSpeed[2]);			//向上		
+	{		
+		delay_ms(5);
+		if(INPUT8==0)
+    {			
+			pressureAlarm	=	TRUE;
+			
+			closeSerial();
+//			//要么向上
+//			if(homeInfo.GoHome[2]==TRUE && homeInfo.HomeSpeed[2]<0)
+//			{
+//				TMC429_MotorRotate(2,homeInfo.HomeSpeed[2]);			//向上		
+//			}
+//			//要么停止
+//			else
+			{
+				HardStop(2);	delay_ms(5);
+				CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+			}
 		}
-		else
+	}
+	else if(INPUT8==1 )						//Alarm signal remove
+	{			
+		delay_us(500);
+		if(INPUT8==1)
 		{
-			HardStop(2);	
-			CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+			pressureAlarm = FALSE;
+			//CMD_TRACE("pressure alarm remove\n");	
 		}
 	} 
+ 
 }
 //drv_gpio	stm32_pin_irq_enable	GPIO_NOPULL-->GPIO_PULLUP
 void InitIn8AsExti(void)

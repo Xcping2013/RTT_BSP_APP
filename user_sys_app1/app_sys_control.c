@@ -74,7 +74,7 @@ UCHAR ReadWriteSPI1(UCHAR DeviceNumber, UCHAR aTxBuffer, UCHAR LastTransfer)
 
 			   HAL_SPI_TransmitReceive(&hspi1, &aTxBuffer, &aRxBuffer, 1,1000);
 				 if(LastTransfer) DESELECT_TMC429();
-
+				
       return aRxBuffer;
 
     default:	
@@ -132,7 +132,12 @@ void LoadParamFromEeprom(void)
 		g_tParam.ParamVer   = PARAM_VER;
 		g_tParam.MasterBaudrate  = 115200;
 		g_tParam.SlaveBaudrate   = 115200;
-		g_tParam.Project_ID = COMMON;
+	
+		if( g_tParam.Project_ID == BUTTON_ROAD || g_tParam.Project_ID == OQC_FLEX)
+		{
+			;
+		}
+		else g_tParam.Project_ID = COMMON;
 		//g_tParam.Project_ID = OQC_FLEX;
 	
 #if defined(USING_INC_MBTMC429) 
@@ -185,7 +190,6 @@ void LoadParamFromEeprom(void)
 
 		SaveParamToEeprom();						
 	}
-	
 	switch(g_tParam.Project_ID)
 	{
 		case OQC_FLEX: 
@@ -311,13 +315,25 @@ void SetAmaxAutoByspeed(u8 axisNum,int speed)
 	}
 	else if(MotorConfig[axisNum].PulseDiv==5 &&	MotorConfig[axisNum].RampDiv==8)
 	{
-		if (speed==70)										MotorConfig[axisNum].AMax=200;	//0.05s-->210---0.5/S
+		if (speed==70)								MotorConfig[axisNum].AMax=200;	//0.05s-->210---0.5/S
+		
 		else if (speed<50)								MotorConfig[axisNum].AMax=speed;	
 		else if (49<speed && speed<105)		MotorConfig[axisNum].AMax=speed*2;	
 		else if (104<speed && speed<210)	MotorConfig[axisNum].AMax=speed*3;		
 		else 															MotorConfig[axisNum].AMax=2000;	
 		SetAMax(axisNum, MotorConfig[axisNum].AMax);
 	}
+//	else if(MotorConfig[axisNum].PulseDiv==5 &&	MotorConfig[axisNum].RampDiv==8)
+//	{
+//		if (speed==35)										MotorConfig[axisNum].AMax=50;	//0.05s-->210---0.5/S
+
+//		if (speed==70)										MotorConfig[axisNum].AMax=200;	//0.05s-->210---0.5/S
+//		else if (speed<50)								MotorConfig[axisNum].AMax=speed;	
+//		else if (49<speed && speed<105)		MotorConfig[axisNum].AMax=speed*2;	
+//		else if (104<speed && speed<210)	MotorConfig[axisNum].AMax=speed*3;		
+//		else 															MotorConfig[axisNum].AMax=2000;	
+//		SetAMax(axisNum, MotorConfig[axisNum].AMax);
+//	}
 
 	else if(MotorConfig[axisNum].PulseDiv==7&&	MotorConfig[axisNum].RampDiv==10)
 	{
@@ -384,32 +400,28 @@ void MotorAutoReset_preset( void )
 	
 	Stop_HardTimer();	
 	motorsReset_InOrder=TRUE;
-	//设置回原点速度模式下的最大速度和加速度
-	TMC429_MotorStop(0);TMC429_MotorStop(1);TMC429_MotorStop(2);
-	Write429Int(IDX_VMAX|MOTOR0, 2047);		
-	Write429Int(IDX_VMAX|MOTOR1, 2047);			
-	Write429Int(IDX_VMAX|MOTOR2, 2047);		
+	
+//motor rotate 内部已经有调用
+//	Write429Int(IDX_VMAX|MOTOR0, 2047);		
+//	Write429Int(IDX_VMAX|MOTOR1, 2047);			
+//	Write429Int(IDX_VMAX|MOTOR2, 2047);		
 	
 	for(uint8_t i=0;i<3;i++)
 	{
-//		SetAMax(i, 2000);
+		StopMotorByRamp(i);
 		homeInfo.Homed[i]=FALSE;
 		homeInfo.GoHome[i]=FALSE;
 		homeInfo.GoLimit[i]=FALSE;
-		SetAmaxAutoByspeed(i,g_tParam.speed_home[i]);
-		//		SetAMax(i, 2000);
 		homeInfo.HomeSpeed[i]=g_tParam.speed_home[i];	
-	}
-	
-						
+	}		
+	delay_ms(20);	
 	switch(g_tParam.Project_ID)
 	{
 		case BUTTON_OFFLINE:				
-				 //Cylinder_Reset_check();
+				 
 		case BUTTON_ONLINE:
 				 homeInfo.GoHome[AXIS_Y]=TRUE;
-				 TMC429_MotorRotate(AXIS_Y,-homeInfo.HomeSpeed[AXIS_Y]);			//逆时针旋转		L		Y轴先复位		Y轴先后后前	
-		
+				 TMC429_MotorRotate(AXIS_Y,-homeInfo.HomeSpeed[AXIS_Y]);			//逆时针旋转		L		Y轴先复位		Y轴先后后前		
 				 Start_HardTimer();
   
 				break;
@@ -419,7 +431,6 @@ void MotorAutoReset_preset( void )
 			
 				 homeInfo.GoHome[AXIS_Z]=TRUE;
 				 homeInfo.GoLimit[AXIS_Z]=FALSE;
-				 homeInfo.Homed[AXIS_Z]=FALSE;
 				 homeInfo.HomeSpeed[AXIS_Z]=-g_tParam.speed_home[AXIS_Z];
 		
 				 TMC429_MotorRotate(AXIS_Z, -g_tParam.speed_home[AXIS_Z]);			//逆时针旋转		L		Z轴先复位		Z轴先上后下
@@ -455,6 +466,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	for(uint8_t i=0;i<N_O_MOTORS;i++)
 	{			
+		//增加保护，防止EEPROM兑取错误，造成电机失速的异常运动
 		MotorHomingWithHomeSensor(i,homeInfo.HomeSpeed[i]);
 		MotorHomingWithLimitSwitch(i,homeInfo.HomeSpeed[i]);
 	}		
@@ -510,7 +522,73 @@ void assert_failed(uint8_t *file, uint32_t line)
 
 //
 
+ALIGN(RT_ALIGN_SIZE)
+static rt_uint8_t IN8_stack[ 512 ];
 
+static struct rt_thread IN8_thread;
+
+//在正常线程里面和定时器里面调用SPI会影响SHELL操作SPI！！！
+//根本原因：给串口发送命令,串口接收中断,打断上一条SPI操作,导致后续的操作也出现问题
+//比如在打印压力值,发送命令操作便异常,定时器寻原点中断优先级高不变打断
+//所以在打印压力值情况下发送停止命令有时会异常
+static void IN8_thread_entry(void *parameter)
+{
+    static uint8_t IN8_ONCnt=0;
+
+    while (1)
+    {
+			 rt_enter_critical();
+       if( INPUT8==0 && Read429Short(IDX_VACTUAL|(AXIS_Z<<5)) > 0 )
+				{
+					IN8_ONCnt++; 	
+					if(IN8_ONCnt>=2) 
+					{
+						HardStop(2);
+						IN8_ONCnt=0;
+						CMD_TRACE("stop motor z due to pressure overhigh!!!\n");	
+					}
+				}
+				else IN8_ONCnt=0;
+				rt_exit_critical();
+				rt_thread_mdelay(2); 
+    }
+}
+
+int IN8_thread_init(void)
+{
+//    rt_err_t result;
+
+//    /* init led thread */
+//    result = rt_thread_init(&IN8_thread,
+//                            "IN8",
+//                            IN8_thread_entry,
+//                            RT_NULL,
+//                            (rt_uint8_t *)&IN8_stack[0],
+//                            sizeof(IN8_stack),
+//                            20,
+//                            20);
+//    if (result == RT_EOK)
+//    {
+//       rt_thread_startup(&IN8_thread);
+//    }
+//    return 0;
+//		
+    rt_err_t ret = RT_EOK;
+
+
+    rt_thread_t thread = rt_thread_create("IN8", IN8_thread_entry, RT_NULL, 1024, 30, 20);
+    if (thread != RT_NULL)
+    {
+        rt_thread_startup(thread);
+    }
+    else
+    {
+        ret = RT_ERROR;
+    }
+    return ret;	
+}
+
+//INIT_APP_EXPORT(IN8_thread_init);
 
 
 

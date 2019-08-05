@@ -39,7 +39,7 @@ int SysRunLed_thread_init(void)
                             RT_NULL,
                             (rt_uint8_t *)&led_stack[0],
                             sizeof(led_stack),
-                            20,
+                            21,
                             20);
     if (result == RT_EOK)
     {
