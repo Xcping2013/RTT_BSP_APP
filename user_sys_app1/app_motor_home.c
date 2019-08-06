@@ -146,7 +146,7 @@ void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed)
 	if(homeInfo.GoHome[axisNum])
 	{
 		static uint8_t motorlimitedCNT[3]={0,0,0};
-		//回原点过程中速度=0,则触发原点，电机会往方向运行
+		//回原点过程中速度=0,且判断为触发限位，电机会往方向运行
 		//如果回原点过程响应电机停止命令，则动作为：电机向上回原点，电机停止命令，电机向下找负限位，再发停止命令，电机又反向运动
 		//所以电机回原点命令后不响应其他动作命令，或者响应其他命令时关闭回原点开关
 		if(Read429Short(IDX_VACTUAL|(axisNum<<5))==0)													
@@ -155,14 +155,14 @@ void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed)
 			if(motorlimitedCNT[axisNum]>=3)
 			{
 				u8 SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-				if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											  	//触发左限位
+				if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											 	//触发左限位
 				{		
-						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,HomeSpeed);				  //向右转
-						else 						TMC429_MotorRotate(axisNum,-HomeSpeed);		
+						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,HomeSpeed/4);			//向右转
+						else 						TMC429_MotorRotate(axisNum,-HomeSpeed/4);		
 				}
 				if((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)												//触发右限位
 				{																													 		
-						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,-HomeSpeed);					//左转
+						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,-HomeSpeed);				//左转
 						else 						TMC429_MotorRotate(axisNum,HomeSpeed);
 				}
 				motorlimitedCNT[axisNum]=0;
