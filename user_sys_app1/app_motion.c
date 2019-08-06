@@ -582,7 +582,7 @@ uint8_t TMC429_MotorRotate(uint8_t motor_number, int32_t motor_speed)
 		
     Set429RampMode(motor_number, RM_VELOCITY);
 		
-	SetAmaxAutoByspeed(motor_number,abs(motor_speed));
+		SetAmaxAutoByspeed(motor_number,abs(motor_speed));
 	  
     Write429Short(IDX_VMAX|(motor_number<<5), 2047);
 	  

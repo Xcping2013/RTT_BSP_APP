@@ -118,14 +118,20 @@ void MotorHomingWithLimitSwitch(uint8_t axisNum, int HomeSpeed)
 {	
 	if(homeInfo.GoLimit[axisNum])
 	{
-		uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);																								
-		if(((SwitchStatus& (0x02<<axisNum*2)) ? 1:0) && (HomeSpeed<0)) 								
+		uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);		
+		if(((SwitchStatus& (0x02<<axisNum*2)) ? 1:0) && ( (SwitchStatus& (0x01<<axisNum*2)) ? 1:0))
+		{
+			//两个限位都触发，不正常
+			//Do nothing
+	
+		}		
+		else if(((SwitchStatus& (0x02<<axisNum*2)) ? 1:0) && (HomeSpeed<0)) 								
 		{																													 
 			{
 				setPositionAsOrigin(axisNum);							
 			}
 		}
-		if(((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)		&& (HomeSpeed>0)) 
+		else if(((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)		&& (HomeSpeed>0)) 
 		{																													  //REFR1  顺时针触发右限位时反转				
 			{
 				setPositionAsOrigin(axisNum);				
@@ -155,12 +161,20 @@ void MotorHomingWithHomeSensor(uint8_t axisNum, int HomeSpeed)
 			if(motorlimitedCNT[axisNum]>=3)
 			{
 				u8 SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-				if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											 	//触发左限位
+
+				if(((SwitchStatus& (0x02<<axisNum*2)) ? 1:0) && ( (SwitchStatus& (0x01<<axisNum*2)) ? 1:0))
+				{
+				//两个限位都触发，不正常
+				//Do nothing
+		
+				}
+			
+				else if((SwitchStatus& (0x02<<axisNum*2)) ? 1:0)											 	//触发左限位
 				{		
 						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,HomeSpeed/4);			//向右转
 						else 						TMC429_MotorRotate(axisNum,-HomeSpeed/4);		
 				}
-				if((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)												//触发右限位
+				else if((SwitchStatus& (0x01<<axisNum*2)) ? 1:0)												//触发右限位
 				{																													 		
 						if(HomeSpeed>0)	TMC429_MotorRotate(axisNum,-HomeSpeed);				//左转
 						else 						TMC429_MotorRotate(axisNum,HomeSpeed);

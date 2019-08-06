@@ -145,11 +145,18 @@ static void LimitSensorProcess(uint8_t actualMotor)
 		{
 			//确定停止是由于限位触发的原因后，电机反转
 			u8 SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);
-			if((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0)													//触发左限位
-			{		
-				TMC429_MotorRotate(actualMotor,	(abs(homeInfo.HomeSpeed[actualMotor])/4));					//向右转			
+			
+			if(((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0) && ( (SwitchStatus& (0x01<<actualMotor*2)) ? 1:0))
+			{
+				//两个限位都触发，不正常
+				//Do nothing
+		
 			}
-			if((SwitchStatus& (0x01<<actualMotor*2)) ? 1:0)													//触发右限位
+			else if((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0)													//触发左限位
+			{		
+				TMC429_MotorRotate(actualMotor,	(abs(homeInfo.HomeSpeed[actualMotor])/4));	//向右转			
+			}
+			else if((SwitchStatus& (0x01<<actualMotor*2)) ? 1:0)													//触发右限位
 			{																													 		
 				TMC429_MotorRotate(actualMotor,-abs(homeInfo.HomeSpeed[actualMotor]));				//左转
 			}
@@ -162,11 +169,17 @@ static void LimitSensorProcess(uint8_t actualMotor)
 		//确定停止是由于限位触发的原因后，电机复位OK
 		uint8_t SwitchStatus=Read429SingleByte(IDX_REF_SWITCHES, 3);	
 		
-		if(((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0) && (homeInfo.HomeSpeed<0)) 								
+		if((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0 && (SwitchStatus& (0x01<<actualMotor*2)) ? 1:0)
+		{
+			//两个限位都触发，不正常
+			//Do nothing
+	
+		}
+		else if(((SwitchStatus& (0x02<<actualMotor*2)) ? 1:0) && (homeInfo.HomeSpeed<0)) 								
 		{																													 
 			setPositionAsOrigin(actualMotor);							
 		}
-		if(((SwitchStatus& (0x01<<actualMotor*2)) ? 1:0) && (homeInfo.HomeSpeed>0)) 
+		else if(((SwitchStatus& (0x01<<actualMotor*2)) ? 1:0) && (homeInfo.HomeSpeed>0)) 
 		{																													
 			setPositionAsOrigin(actualMotor);				
 		}
@@ -189,7 +202,7 @@ static void MotorSensor_Thread_entry(void *parameter)
 		
 		rt_exit_critical();
 		
-		rt_thread_mdelay(30);		
+		rt_thread_mdelay(50);		
 	}		
 }
 int MotorSensor_thread_init(void)
@@ -295,6 +308,9 @@ static void OriginSensorIRQCall(void *args)
 //
 /***************************************************************************/
 //														CodeTest Area START
+
+//回原点速度需和应用的一致,不要一会使用串口调入的参数一会使用eeprom内的参数
+//电机脉冲线接触不良，造成非常难受的异常
 /***************************************************************************/
 void motor_gohome(uint8_t actualMotor, int home_speed)
 {
@@ -304,8 +320,8 @@ void motor_gohome(uint8_t actualMotor, int home_speed)
 		homeInfo.GoLimit[actualMotor]= FALSE;
 		homeInfo.Homed[actualMotor]	= FALSE;
 		homeInfo.HomeSpeed[actualMotor]=home_speed;
-		SetAmaxAutoByspeed(actualMotor,abs(home_speed));
 		
+		//SetAmaxAutoByspeed(actualMotor,abs(home_speed));	
 		OriginSensorIRQEnable(actualMotor);
 		
 		TMC429_MotorRotate(actualMotor,home_speed);
